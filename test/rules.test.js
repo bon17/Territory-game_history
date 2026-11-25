@@ -24,11 +24,18 @@ t('첫 라운드 걸 수 있는 칸 = 시작 칸 이웃 3칸', () => {
   const m = H.buildMap(6);
   assert.deepStrictEqual(R.legalTargets(m, 0).sort(), ['-1,-2', '0,-2', '1,-3'].sort());
 });
-t('코인: 맞힌 수 + 전원정답 2, 반 70% 이상이면 +3', () => {
+t('코인: 정답 비율×5(반올림) + 전원정답 2, 반 70% 이상이면 +3', () => {
   const r = R.coinsFromAnswers([{ team: 0, correct: true }, { team: 0, correct: true }, { team: 1, correct: true }, { team: 1, correct: false }], 2);
-  assert.strictEqual(r.perTeam[0].coins, 2 + 2 + 3);
-  assert.strictEqual(r.perTeam[1].coins, 1 + 3);
-  assert.ok(r.coop);
+  assert.ok(r.coop);                                   // 반 전체 3/4 = 75% ≥ 70%
+  assert.strictEqual(r.perTeam[0].coins, 5 + 2 + 3);  // 2/2 = 100%
+  assert.strictEqual(r.perTeam[1].coins, 3 + 3);      // 1/2 = 50% → 2.5 → 3
+});
+t('인원이 달라도 같은 비율이면 같은 코인', () => {
+  const team = (t, n, k) => Array.from({ length: n }, (_, i) => ({ team: t, correct: i < k }));
+  const r = R.coinsFromAnswers([...team(0, 5, 5), ...team(1, 4, 4), ...team(2, 5, 4), ...team(3, 4, 3)], 4);
+  assert.strictEqual(r.perTeam[0].coins, r.perTeam[1].coins); // 모두 정답: 5명 = 4명
+  assert.strictEqual(r.perTeam[2].coins, 4 + 3);             // 80% → 4, 반 전체 16/18 → +3
+  assert.strictEqual(r.perTeam[3].coins, 4 + 3);             // 75% → 4
 });
 t('빈 칸 경쟁: 많이 건 모둠, 동점이면 땅 점수 낮은 모둠', () => {
   const m = H.buildMap(2);

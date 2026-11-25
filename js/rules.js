@@ -4,7 +4,7 @@
 
   const CELL_POINT = { normal: 1, fort: 1, start: 1, treasure: 3 };
   const REGION_BONUS = 5;
-  const COOP_RATE = 0.7, COOP_COINS = 3, ALL_CORRECT_COINS = 2;
+  const COOP_RATE = 0.7, COOP_COINS = 3, ALL_CORRECT_COINS = 2, MAX_RATE_COINS = 5;
 
   const MISSIONS = [
     { id: 'treasure2', text: '보물 칸 2개 이상 차지하기', bonus: 5, check: (cells, t) => count(cells, t, 'treasure') >= 2 },
@@ -19,14 +19,16 @@
     return Object.values(cells).filter(c => c.owner === team && (!type || c.type === type)).length;
   }
 
-  /** 문제 결과 → 모둠별 코인. results: [{team, correct}] (접속 중인 학생만) */
+  /** 문제 결과 → 모둠별 코인. results: [{team, correct}] (접속 중인 학생만)
+   *  모둠 인원이 달라도 공평하게: 정답 비율 × 5 (반올림) + 전원 정답 2 + (반 전체 70% 이상이면) 3 */
   function coinsFromAnswers(results, teamCount) {
     const out = [];
     for (let t = 0; t < teamCount; t++) {
       const mine = results.filter(r => r.team === t);
       const right = mine.filter(r => r.correct).length;
       const all = mine.length > 0 && right === mine.length;
-      out.push({ team: t, right, total: mine.length, allCorrect: all, coins: right + (all ? ALL_CORRECT_COINS : 0) });
+      const rate = mine.length ? right / mine.length : 0;
+      out.push({ team: t, right, total: mine.length, allCorrect: all, coins: Math.round(rate * MAX_RATE_COINS) + (all ? ALL_CORRECT_COINS : 0) });
     }
     const total = results.length, right = results.filter(r => r.correct).length;
     const coop = total > 0 && right / total >= COOP_RATE;
