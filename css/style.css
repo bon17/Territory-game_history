@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;800&display=swap');
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
 
 :root {
@@ -12,8 +12,8 @@
   --ok: #22A67A;
   --no: #E0526B;
   --radius: 22px;
-  --round: 'Jua', 'Pretendard', system-ui, sans-serif;
-  --body: 'Pretendard', system-ui, sans-serif;
+  --round: 'Jua', 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  --body: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -70,3 +70,9 @@ body.no-motion *, body.no-motion *::before { animation: none !important; transit
 
 .coin { display: inline-block; width: 1.25em; height: 1.25em; background: url('../images/coin.png') center / contain no-repeat; vertical-align: -.2em; }
 .ico { display: inline-block; vertical-align: middle; object-fit: contain; }
+
+/* 화면 안 확인 창 */
+.modal { position: fixed; inset: 0; z-index: 100; background: rgba(59,53,97,.45); display: grid; place-items: center; padding: 24px; }
+.modal-box { width: min(560px, 100%); padding: 28px; display: grid; gap: 22px; }
+.modal-text { font-size: 24px; line-height: 1.5; white-space: pre-line; word-break: keep-all; max-height: 60vh; overflow: auto; }
+.modal-btns { display: flex; gap: 12px; justify-content: flex-end; }

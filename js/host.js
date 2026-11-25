@@ -17,6 +17,22 @@
   const unsub = {};
   const R = p => `rooms/${G.code}/${p}`;
 
+  /* 화면 안 확인 창 (브라우저 기본 창 대신: TV에서 보기 좋고, 막힌 환경에서도 작동) */
+  function ask(text, okLabel, cancelLabel) {
+    return new Promise(resolve => {
+      const layer = document.createElement('div');
+      layer.className = 'modal';
+      layer.innerHTML = `<div class="card modal-box" role="dialog" aria-modal="true"><div class="modal-text"></div><div class="modal-btns">
+        ${cancelLabel === null ? '' : `<button class="btn" data-v="0">${esc(cancelLabel || '취소')}</button>`}
+        <button class="btn primary" data-v="1">${esc(okLabel || '확인')}</button></div></div>`;
+      layer.querySelector('.modal-text').textContent = text;
+      layer.querySelectorAll('button').forEach(b => b.onclick = () => { layer.remove(); resolve(b.dataset.v === '1'); });
+      document.body.appendChild(layer);
+      layer.querySelector('.primary').focus();
+    });
+  }
+  const tell = text => ask(text, '확인', null);
+
   function show(id) { document.querySelectorAll('section.screen').forEach(s => s.classList.toggle('hidden', s.id !== id)); }
   function listen(name, path, cb) { if (unsub[name]) unsub[name](); unsub[name] = db.on(path, cb); }
 
@@ -29,9 +45,14 @@
     $('#setupCritters').innerHTML = [0, 1, 2, 3, 4, 5].map(t => `<span style="width:54px;height:54px;display:inline-block">${critterSVG(t)}</span>`).join('');
     $('#modeInfo').textContent = db.mode === 'demo' ? '지금은 데모 모드예요 (Firebase 설정 전: 이 컴퓨터의 창끼리만 연결)' : '실제 접속 모드 (Firebase 연결됨)';
     $('#bank').addEventListener('input', bankInfo);
-    fetch(encodeURI('questions/문제은행_초안.tsv')).then(r => r.ok ? r.text() : '').then(t => {
-      if (t && !$('#bank').value.trim()) { $('#bank').value = t; bankInfo(); }
-    }).catch(() => {});
+    const tryLoad = names => {
+      if (!names.length) return;
+      fetch(encodeURI(names[0])).then(r => r.ok ? r.text() : '').catch(() => '').then(t => {
+        if (t) { if (!$('#bank').value.trim()) { $('#bank').value = t; bankInfo(); } }
+        else tryLoad(names.slice(1));
+      });
+    };
+    tryLoad(['questions/문제은행_초안.tsv', 'questions/bank.tsv']);
     if (params.has('bots')) $('#bots').checked = true;
     if (params.get('teams')) $('#teamCount').value = params.get('teams');
     if (params.get('rounds')) $('#rounds').value = params.get('rounds');
@@ -51,7 +72,7 @@
     const bank = Grade.parseBank($('#bank').value);
     const teamCount = +$('#teamCount').value, rounds = +$('#rounds').value;
     const usable = bank.filter(q => !q.games || q.games.includes('땅'));
-    if (usable.length < rounds) { alert(`문제가 부족해요. (필요 ${rounds}개, 있는 문제 ${usable.length}개)`); return; }
+    if (usable.length < rounds) { tell(`문제가 부족해요. (필요 ${rounds}개, 있는 문제 ${usable.length}개)`); return; }
     const cells = buildNamedMap(teamCount);
     G = {
       code: String(1000 + Math.floor(Math.random() * 9000)), teamCount, totalRounds: rounds,
@@ -87,7 +108,7 @@
     if (window.QRCode) new QRCode($('#qr'), { text: joinUrl(), width: 230, height: 230, colorDark: '#3B3561' });
     else $('#qr').classList.add('hidden');
     $('#demoBox').classList.toggle('hidden', db.mode !== 'demo');
-    $('#btnOpenStudent').onclick = () => window.open(joinUrl(), '_blank');
+    $('#btnOpenStudent').href = joinUrl();
     $('#btnStart').onclick = startGame;
     subscribePlayers();
     publish();
@@ -239,13 +260,13 @@
     G.round++;
     startQuestion();
   }
-  function skipQuestion() {
-    if (!confirm('이 문제를 넘길까요? (코인 없이 다음 문제로)')) return;
-    nextRound();
+  async function skipQuestion() {
+    if (!await ask('이 문제를 넘길까요? 코인 없이 다음 문제로 가요.', '넘기기')) return;
+    if (G.phase === 'question') nextRound();
   }
-  function jumpToLast() {
-    if (G.round >= G.totalRounds - 1) { alert('이미 마지막 라운드예요.'); return; }
-    if (!confirm('다음 문제를 마지막 라운드로 할까요?')) return;
+  async function jumpToLast() {
+    if (G.round >= G.totalRounds - 1) { tell('이미 마지막 라운드예요.'); return; }
+    if (!await ask('다음 문제를 마지막 라운드로 할까요? (어려운 문제가 나와요)', '마지막 라운드로')) return;
     const last = G.qs[G.totalRounds - 1];
     G.qs[G.round] = last;
     G.totalRounds = G.round + 1;
@@ -486,10 +507,12 @@
     $('#lowList').innerHTML = G.low.length ? G.low.map(l => `<li><span class="rate">${Math.round(l.rate * 100)}%</span> ${esc(l.text)}<br><b>정답: ${esc(l.answer)}</b></li>`).join('') : '<li>기록된 문제가 없어요</li>';
     $('#btnCopyLow').onclick = () => {
       const text = G.low.map((l, i) => `${i + 1}. (${Math.round(l.rate * 100)}%) ${l.text} → ${l.answer}`).join('\n');
-      navigator.clipboard.writeText(text).then(() => alert('복사했어요.'), () => prompt('아래 내용을 복사하세요', text));
+      const done = () => tell('복사했어요. 학습지나 메모장에 붙여넣으세요.');
+      const fail = () => tell('자동 복사가 막혀 있어요. 아래 내용을 직접 복사하세요.\n\n' + text);
+      try { navigator.clipboard.writeText(text).then(done, fail); } catch (e) { fail(); }
     };
-    $('#btnDelete').onclick = () => {
-      if (!confirm('이 방의 기록을 모두 지울까요?')) return;
+    $('#btnDelete').onclick = async () => {
+      if (!await ask('이 방의 기록을 모두 지울까요? 되돌릴 수 없어요.', '지우기')) return;
       db.remove(`rooms/${G.code}`).then(() => { localStorage.removeItem(SAVE_KEY); location.href = location.pathname; });
     };
   }
@@ -547,7 +570,7 @@
   $('#btnSkip').onclick = skipQuestion;
   $('#btnLast').onclick = jumpToLast;
   $('#btnSound').onclick = () => { sound.on = !sound.on; renderHeader(); };
-  $('#btnEnd').onclick = () => { if (confirm('게임을 끝내고 최종 결과를 볼까요?')) finish(); };
+  $('#btnEnd').onclick = async () => { if (await ask('게임을 끝내고 최종 결과를 볼까요?', '결과 보기')) finish(); };
   window.addEventListener('beforeunload', save);
 
   initSetup();
