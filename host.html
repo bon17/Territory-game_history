@@ -25,7 +25,7 @@
   #lobby .top { display: flex; gap: 32px; align-items: center; }
   #lobby .codebox { padding: 24px 40px; text-align: center; }
   #lobby .codebox .label { font-size: 24px; color: var(--ink2); }
-  #lobby .codebox .code { font-family: 'Jua'; font-size: 120px; letter-spacing: 18px; line-height: 1; }
+  #lobby .codebox .code { font-family: var(--round); font-size: 120px; letter-spacing: 18px; line-height: 1; }
   #lobby .codebox .url { font-size: 17px; color: var(--ink2); word-break: break-all; max-width: 520px; }
   #qr { padding: 14px; background: #fff; border: 3px solid var(--ink); border-radius: 18px; }
   #qr img, #qr canvas { display: block; }
@@ -38,20 +38,21 @@
   /* 게임 화면 */
   #game { flex-direction: column; }
   .topbar { display: flex; align-items: center; gap: 16px; padding: 12px 20px; }
-  .topbar .logo { font-family: 'Jua'; font-size: 28px; }
-  .pill { font-family: 'Jua'; font-size: 22px; background: #fff; border: 3px solid var(--ink); border-radius: 999px; padding: 6px 18px; }
+  .topbar .logo { font-family: var(--round); font-size: 28px; }
+  .pill { font-family: var(--round); font-size: 22px; background: #fff; border: 3px solid var(--ink); border-radius: 999px; padding: 6px 18px; }
   .pill.phase { background: #FFD84D; }
-  .timer { font-family: 'Jua'; font-size: 40px; min-width: 96px; text-align: center; background: #fff; border: 3px solid var(--ink); border-radius: 18px; padding: 0 14px; }
+  .timer { font-family: var(--round); font-size: 40px; min-width: 96px; text-align: center; background: #fff; border: 3px solid var(--ink); border-radius: 18px; padding: 0 14px; }
   .timer.hurry { background: #FFB3C1; animation: shake .3s infinite; }
   .ctrl { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-  .stage { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; padding: 0 20px 18px; min-height: 0; }
-  .mapwrap { position: relative; min-height: 0; display: grid; place-items: center; }
-  .mapwrap svg.map { max-height: 100%; }
-  .board { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
+  .stage { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-template-rows: minmax(0, 1fr); gap: 16px; padding: 0 20px 18px; min-height: 0; }
+  .mapwrap { position: relative; min-height: 0; }
+  .mapwrap svg.map { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .side { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow: auto; }
+  .board { display: flex; flex-direction: column; gap: 10px; }
   .board .row { display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: center; padding: 8px 12px; border-left-width: 10px; }
-  .board .row .nm { font-family: 'Jua'; font-size: 22px; line-height: 1.1; }
+  .board .row .nm { font-family: var(--round); font-size: 22px; line-height: 1.1; }
   .board .row .sub { font-size: 15px; color: var(--ink2); }
-  .board .row .score { font-family: 'Jua'; font-size: 30px; text-align: right; line-height: 1; }
+  .board .row .score { font-family: var(--round); font-size: 30px; text-align: right; line-height: 1; }
   .board .row .score small { display: block; font-size: 14px; color: var(--ink2); }
   .board .status { font-size: 15px; font-weight: 700; }
   .crown { display: inline-block; width: 22px; height: 16px; vertical-align: -1px; }
@@ -65,47 +66,54 @@
   .qtext { font-size: 44px; font-weight: 800; line-height: 1.3; word-break: keep-all; }
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .choice { font-size: 28px; font-weight: 700; padding: 16px 20px; border: 3px solid var(--ink); border-radius: 18px; background: #fff; display: flex; gap: 14px; align-items: center; word-break: keep-all; }
-  .choice .n { font-family: 'Jua'; width: 40px; height: 40px; border-radius: 50%; background: var(--sand); border: 3px solid var(--ink); display: grid; place-items: center; flex: none; }
+  .choice .n { font-family: var(--round); width: 40px; height: 40px; border-radius: 50%; background: var(--sand); border: 3px solid var(--ink); display: grid; place-items: center; flex: none; }
   .choice.right { background: #C8F3DF; }
   .choice.dim { opacity: .4; }
   .ox { display: flex; gap: 24px; justify-content: center; }
-  .ox .choice { font-family: 'Jua'; font-size: 80px; width: 180px; justify-content: center; }
+  .ox .choice { font-family: var(--round); font-size: 80px; width: 180px; justify-content: center; }
   .answer { font-size: 34px; font-weight: 800; }
   .answer b { background: #C8F3DF; border: 3px solid var(--ink); border-radius: 14px; padding: 2px 14px; }
   .explain { font-size: 24px; line-height: 1.5; background: var(--sand); border-radius: 16px; padding: 12px 18px; word-break: keep-all; }
   .teamres { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
   .teamres .tr { border: 3px solid var(--ink); border-radius: 16px; padding: 8px; text-align: center; display: grid; justify-items: center; gap: 2px; }
-  .teamres .tr .r { font-family: 'Jua'; font-size: 22px; }
-  .teamres .tr .c { font-family: 'Jua'; font-size: 26px; }
-  .coop { font-family: 'Jua'; font-size: 26px; text-align: center; background: #FFD84D; border: 3px solid var(--ink); border-radius: 16px; padding: 8px; }
+  .teamres .tr .r { font-family: var(--round); font-size: 22px; }
+  .teamres .tr .c { font-family: var(--round); font-size: 26px; }
+  .coop { font-family: var(--round); font-size: 26px; text-align: center; background: #FFD84D; border: 3px solid var(--ink); border-radius: 16px; padding: 8px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 17px; }
-  .chips .btn { font-family: 'Pretendard'; font-weight: 700; }
+  .chips .btn { font-family: var(--body); font-weight: 700; }
 
-  .bubble { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); width: min(880px, 96%); padding: 18px 24px; display: grid; gap: 12px; text-align: center; }
-  .bubble .title { font-family: 'Jua'; font-size: 34px; }
-  .bags { display: flex; justify-content: center; gap: 26px; flex-wrap: wrap; }
-  .bag { display: grid; justify-items: center; gap: 4px; font-family: 'Jua'; font-size: 22px; }
-  .bag .sack { width: 84px; height: 84px; }
-  .bag .amt { font-size: 38px; min-height: 44px; }
+  .bubble { padding: 18px; display: grid; gap: 12px; text-align: center; }
+  .bubble .title { font-family: var(--round); font-size: 32px; line-height: 1.2; }
+  .bubble .count { font-size: 18px; color: var(--ink2); }
+  .bags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .bags.one { grid-template-columns: 1fr; }
+  .bag { display: grid; justify-items: center; gap: 2px; font-family: var(--round); font-size: 20px; padding: 8px; border-radius: 16px; border: 3px solid transparent; }
+  .bag .sack { width: 72px; height: 72px; }
+  .bag .amt { font-size: 40px; min-height: 46px; line-height: 1.1; }
+  .bag.win { border-color: var(--ok); background: #E4F8EF; }
   .bag.win .amt { color: var(--ok); }
-  .bubble .result { font-family: 'Jua'; font-size: 34px; }
-  .center-msg { padding: 26px 40px; font-family: 'Jua'; font-size: 40px; text-align: center; display: grid; gap: 16px; justify-items: center; }
-  .bid-hint { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); font-family: 'Jua'; font-size: 28px; padding: 8px 24px; white-space: nowrap; }
+  .bubble .result { font-family: var(--round); font-size: 30px; line-height: 1.25; }
+  .bubble .result small { display: block; font-size: 17px; color: var(--ink2); }
+  .summary { padding: 16px; display: grid; gap: 10px; }
+  .summary .msg { font-family: var(--round); font-size: 26px; text-align: center; line-height: 1.3; }
+  .summary .ch { display: flex; gap: 8px; align-items: center; font-size: 18px; font-weight: 700; line-height: 1.3; }
+  .summary .ch .from { color: var(--no); font-weight: 600; }
+  .bid-hint { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); font-family: var(--round); font-size: 28px; padding: 8px 24px; white-space: nowrap; }
 
   /* 결과 */
   #final { flex-direction: column; align-items: center; padding: 20px; gap: 16px; overflow: auto; }
   #final h1 { font-size: 56px; margin: 0; }
   #finalWrap { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; width: min(1500px, 100%); }
   .rank { display: grid; grid-template-columns: 50px 70px 1fr auto; gap: 12px; align-items: center; padding: 10px 16px; margin-bottom: 10px; }
-  .rank .place { font-family: 'Jua'; font-size: 40px; text-align: center; }
-  .rank .nm { font-family: 'Jua'; font-size: 28px; }
+  .rank .place { font-family: var(--round); font-size: 40px; text-align: center; }
+  .rank .nm { font-family: var(--round); font-size: 28px; }
   .rank .detail { font-size: 16px; color: var(--ink2); }
-  .rank .tot { font-family: 'Jua'; font-size: 48px; }
+  .rank .tot { font-family: var(--round); font-size: 48px; }
   .low { padding: 20px; }
   .low h2 { margin: 0 0 10px; }
   .low ol { margin: 0; padding-left: 26px; font-size: 19px; line-height: 1.45; }
   .low li { margin-bottom: 10px; }
-  .low .rate { font-family: 'Jua'; color: var(--no); }
+  .low .rate { font-family: var(--round); color: var(--no); }
 </style>
 </head>
 <body class="host">
@@ -158,7 +166,7 @@
   </header>
   <main class="stage">
     <div class="mapwrap"><svg class="map" id="map" role="img" aria-label="육각형 땅 지도"></svg><div id="overlay"></div></div>
-    <aside class="board" id="board"></aside>
+    <aside class="side"><div id="sidecard"></div><div class="board" id="board"></div></aside>
   </main>
 </section>
 

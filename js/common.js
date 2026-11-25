@@ -164,5 +164,12 @@
     no: () => { tone(330, .15, 'sine', 0, .14); tone(262, .25, 'sine', .12, .14); }
   };
 
+  /* 배경 그림이 있으면 자동 사용 */
+  (function () {
+    const bg = new Image();
+    bg.onload = () => document.body.classList.add('has-bg');
+    bg.src = 'images/background.png';
+  })();
+
   root.Common = { TEAMS, teamLabel, buildNamedMap, drawMap, avatar, critterSVG, PRACTICE_Q, h, esc, SFX, sound };
 })(window);
