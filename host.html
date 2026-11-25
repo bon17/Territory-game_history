@@ -21,7 +21,7 @@
   .critters { display: flex; gap: 6px; }
 
   /* 대기 화면 */
-  #lobby { flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 24px; }
+  #lobby { flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; overflow: auto; }
   #lobby .top { display: flex; gap: 32px; align-items: center; }
   #lobby .codebox { padding: 24px 40px; text-align: center; }
   #lobby .codebox .label { font-size: 24px; color: var(--ink2); }
@@ -31,8 +31,13 @@
   #qr img, #qr canvas { display: block; }
   #lobbyTeams { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; width: min(1300px, 100%); }
   #lobbyTeams .t { padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 22px; }
-  #lobbyTeams .dots { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; min-height: 18px; }
-  #lobbyTeams .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ink); }
+  #lobby .chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; min-height: 34px; }
+  .pchip { font-family: var(--body); font-weight: 800; font-size: 15px; min-width: 44px; min-height: 34px; padding: 2px 10px; border-radius: 999px; border: 3px solid var(--ink); background: var(--c); color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.25); }
+  .pchip.bot { border-style: dashed; opacity: .75; }
+  .pchip:hover, .pchip:focus-visible { outline: 3px solid #FF7A00; outline-offset: 2px; }
+  #waiting { padding: 10px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 18px; background: #fff; border-style: dashed; }
+  #waiting .pchip { color: var(--ink); text-shadow: none; }
+  .modal-btns { flex-wrap: wrap; }
   .demo-banner { background: #FFF3B0; border: 3px dashed var(--ink); border-radius: 16px; padding: 10px 18px; font-size: 18px; display: flex; gap: 14px; align-items: center; }
 
   /* 게임 화면 */
@@ -126,6 +131,7 @@
     <div class="row">
       <label>모둠 수 <select id="teamCount"><option>4</option><option>5</option><option selected>6</option></select></label>
       <label>문제 수 <select id="rounds"><option>5</option><option>10</option><option>12</option><option>14</option><option selected>15</option><option>16</option><option>18</option></select></label>
+      <label>모둠 정하기 <select id="assign"><option value="choose" selected>학생이 고르기</option><option value="random">랜덤 배정</option></select></label>
       <label><input type="checkbox" id="bots"> 가상 학생 채우기 (혼자 시험해 볼 때)</label>
     </div>
     <div>
@@ -146,7 +152,10 @@
     <div id="qr"></div>
   </div>
   <div id="demoBox" class="demo-banner hidden">데모 모드: 이 컴퓨터의 다른 창에서만 들어올 수 있어요. <a class="btn small" id="btnOpenStudent" target="_blank" rel="noopener" style="text-decoration:none">학생 창 열기</a></div>
+  <div id="assignBar" class="hidden"><button class="btn primary" id="btnShuffle" style="font-size:24px">모둠 랜덤으로 섞기</button></div>
+  <div id="waiting" class="card hidden"></div>
   <div id="lobbyTeams"></div>
+  <p id="lobbyHint" class="hint" style="margin:0;font-size:17px;color:var(--ink2);text-align:center"></p>
   <div style="display:flex;gap:14px"><button class="btn" id="btnRules" style="font-size:26px">게임 설명 보기</button><button class="btn go" id="btnStart" style="font-size:30px">시작!</button></div>
 </section>
 

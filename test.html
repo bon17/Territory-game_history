@@ -30,6 +30,7 @@
   <h1><img class="ico" src="images/hourglass.png" alt="" style="width:34px;height:34px">테스트 창</h1>
   <label>모둠 수 <select id="teams"><option>4</option><option>5</option><option selected>6</option></select></label>
   <label>문제 수 <select id="rounds"><option>5</option><option selected>10</option><option>15</option></select></label>
+  <label>모둠 정하기 <select id="assign"><option value="choose" selected>학생이 고르기</option><option value="random">랜덤 배정</option></select></label>
   <label>학생 탭 <select id="kids"><option>1</option><option selected>2</option><option>3</option></select>대</label>
   <label><input type="checkbox" id="bots" checked> 나머지 자리는 가상 학생</label>
   <label><input type="checkbox" id="fast" checked> 빠르게 (시간 1/5)</label>
@@ -78,7 +79,7 @@
     frames = [];
     $('#room').textContent = '방 만드는 중…';
     $('#kidsBox').innerHTML = '';
-    const q = new URLSearchParams({ teams: $('#teams').value, rounds: $('#rounds').value });
+    const q = new URLSearchParams({ teams: $('#teams').value, rounds: $('#rounds').value, assign: $('#assign').value });
     let url = `host.html?demo&test&auto&${q}`;
     if ($('#bots').checked) url += '&bots';
     if ($('#fast').checked) url += '&fast';
@@ -96,7 +97,8 @@
     for (let k = 0; k < n; k++) {
       const team = k % e.data.teamCount;
       const wrap = document.createElement('div');
-      wrap.innerHTML = `<div style="font-family:var(--round);font-size:18px;margin-bottom:4px">${Common.teamLabel(team)} 1번 학생</div><div class="screen"></div>`;
+      const label = $('#assign').value === 'random' ? `학생 탭 ${k + 1} (출석번호 ${team * 10 + 1}번)` : `${Common.teamLabel(team)} 1번 학생`;
+      wrap.innerHTML = `<div style="font-family:var(--round);font-size:18px;margin-bottom:4px">${label}</div><div class="screen"></div>`;
       box.appendChild(wrap);
       makeFrame(wrap.querySelector('.screen'), `play.html?demo&room=${e.data.code}&team=${team}&no=1&slot=${k}`, TAB, `${team + 1}모둠 학생 탭`);
     }

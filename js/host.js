@@ -17,19 +17,31 @@
   const unsub = {};
   const R = p => `rooms/${G.code}/${p}`;
 
-  /* 화면 안 확인 창 (브라우저 기본 창 대신: TV에서 보기 좋고, 막힌 환경에서도 작동) */
-  function ask(text, okLabel, cancelLabel) {
+  /* 화면 안 선택 창 (브라우저 기본 창 대신: TV에서 보기 좋고, 막힌 환경에서도 작동)
+   * buttons: [{label, value, cls}] → 누른 버튼의 value (바깥을 누르면 null) */
+  function choose(text, buttons) {
     return new Promise(resolve => {
       const layer = document.createElement('div');
       layer.className = 'modal';
-      layer.innerHTML = `<div class="card modal-box" role="dialog" aria-modal="true"><div class="modal-text"></div><div class="modal-btns">
-        ${cancelLabel === null ? '' : `<button class="btn" data-v="0">${esc(cancelLabel || '취소')}</button>`}
-        <button class="btn primary" data-v="1">${esc(okLabel || '확인')}</button></div></div>`;
+      layer.innerHTML = `<div class="card modal-box" role="dialog" aria-modal="true"><div class="modal-text"></div><div class="modal-btns"></div></div>`;
       layer.querySelector('.modal-text').textContent = text;
-      layer.querySelectorAll('button').forEach(b => b.onclick = () => { layer.remove(); resolve(b.dataset.v === '1'); });
+      const done = v => { layer.remove(); resolve(v); };
+      buttons.forEach(bt => {
+        const b = document.createElement('button');
+        b.className = 'btn ' + (bt.cls || '');
+        if (bt.html) b.innerHTML = bt.html; else b.textContent = bt.label;
+        if (bt.style) b.style.cssText = bt.style;
+        b.onclick = () => done(bt.value);
+        layer.querySelector('.modal-btns').appendChild(b);
+      });
+      layer.addEventListener('click', e => { if (e.target === layer) done(null); });
       document.body.appendChild(layer);
-      layer.querySelector('.primary').focus();
+      (layer.querySelector('.primary') || layer.querySelector('button')).focus();
     });
+  }
+  function ask(text, okLabel, cancelLabel) {
+    const bts = cancelLabel === null ? [] : [{ label: cancelLabel || '취소', value: false }];
+    return choose(text, [...bts, { label: okLabel || '확인', value: true, cls: 'primary' }]).then(v => v === true);
   }
   const tell = text => ask(text, '확인', null);
 
@@ -56,6 +68,7 @@
     if (params.has('bots')) $('#bots').checked = true;
     if (params.get('teams')) $('#teamCount').value = params.get('teams');
     if (params.get('rounds')) $('#rounds').value = params.get('rounds');
+    if (params.get('assign')) $('#assign').value = params.get('assign');
     try {
       const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
       if (saved && saved.phase !== 'final' && !params.has('auto')) {
@@ -78,7 +91,8 @@
       code: String(1000 + Math.floor(Math.random() * 9000)), teamCount, totalRounds: rounds,
       qs: Rules.pickQuestions(bank, rounds), missions: Rules.dealMissions(teamCount),
       owners: ownersOf(cells), coins: Array(teamCount).fill(0), round: 0, phase: 'lobby',
-      players: {}, answers: {}, votes: {}, bids: {}, stats: {}, extraAccept: [], bots: $('#bots').checked
+      players: {}, answers: {}, votes: {}, bids: {}, stats: {}, extraAccept: [], bots: $('#bots').checked,
+      assign: $('#assign').value // 'choose' 학생이 고르기 · 'random' 랜덤 배정
     };
     db.set(R('missions'), G.missions.map(id => Rules.MISSIONS.find(m => m.id === id).text));
     if (G.bots) addBots();
@@ -110,6 +124,7 @@
     $('#demoBox').classList.toggle('hidden', db.mode !== 'demo');
     $('#btnOpenStudent').href = joinUrl();
     $('#btnStart').onclick = startGame;
+    $('#btnShuffle').onclick = shuffleTeams;
     subscribePlayers();
     publish();
     renderLobby();
@@ -117,6 +132,8 @@
   function subscribePlayers() {
     listen('players', R('players'), p => {
       G.players = Object.assign({}, p || {});
+      // 게임 중에 늦게 온 학생(랜덤 모드)은 인원이 적은 모둠에 바로 넣는다
+      if (G.phase !== 'lobby' && unassigned().length) return placeUnassigned();
       if (G.phase === 'lobby') renderLobby(); else renderBoard();
       save();
     });
@@ -124,8 +141,71 @@
   function membersOf(t) {
     return Object.entries(G.players).filter(([, p]) => p && p.team === t).sort((a, b) => a[1].no - b[1].no);
   }
+  const unassigned = () => Object.entries(G.players).filter(([, p]) => p && (p.team === null || p.team === undefined)).sort((a, b) => a[1].no - b[1].no);
+  const teamSizes = () => Array.from({ length: G.teamCount }, (_, t) => membersOf(t).length);
+  function setTeam(key, team) {
+    const p = G.players[key];
+    if (!p) return;
+    G.players[key] = Object.assign({}, p, { team });
+    db.set(R(`players/${key}`), G.players[key]);
+  }
+  /** 모둠 없는 학생을 인원이 가장 적은 모둠부터 채운다 */
+  function placeUnassigned() {
+    const sizes = teamSizes();
+    for (const [key] of unassigned()) {
+      const min = Math.min(...sizes);
+      const cands = sizes.map((n, t) => n === min ? t : -1).filter(t => t >= 0);
+      const t = pick(cands);
+      sizes[t]++;
+      setTeam(key, t);
+    }
+  }
+  /** 랜덤 섞기: 가상 학생은 그대로 두고 진짜 학생만 고르게 다시 나눈다 */
+  function shuffleTeams() {
+    const humans = Object.entries(G.players).filter(([, p]) => p && !p.bot).map(([k]) => k);
+    for (let i = humans.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [humans[i], humans[j]] = [humans[j], humans[i]]; }
+    humans.forEach(k => { G.players[k] = Object.assign({}, G.players[k], { team: null }); });
+    const sizes = teamSizes();
+    for (const k of humans) {
+      const min = Math.min(...sizes);
+      const cands = sizes.map((n, t) => n === min ? t : -1).filter(t => t >= 0);
+      const t = pick(cands);
+      sizes[t]++;
+      G.players[k].team = t;
+      db.set(R(`players/${k}`), G.players[k]);
+    }
+    SFX.win();
+    renderLobby();
+  }
+  /** 학생 칸을 누르면: 다른 모둠으로 옮기기 / 내보내기 */
+  async function adjustPlayer(key) {
+    const p = G.players[key];
+    if (!p) return;
+    const who = p.bot ? '가상 학생' : `${p.no}번 학생`;
+    const teamBtns = Array.from({ length: G.teamCount }, (_, t) => ({
+      html: `${t + 1}모둠 ${esc(TEAMS[t].name)}`, value: t, cls: t === p.team ? 'primary' : '',
+      style: `border-color:${TEAMS[t].ink};background:${t === p.team ? TEAMS[t].color : TEAMS[t].soft};${t === p.team ? 'color:#fff' : ''}`
+    }));
+    const v = await choose(`${who}을(를) 어느 모둠으로 옮길까요?`, [...teamBtns, { label: '내보내기', value: 'kick', style: 'color:var(--no)' }, { label: '취소', value: null }]);
+    if (v === null || v === undefined || v === p.team) return;
+    if (v === 'kick') {
+      if (!await ask(`${who}을(를) 내보낼까요? 탭에서 다시 입장해야 해요.`, '내보내기')) return;
+      delete G.players[key];
+      db.set(R(`players/${key}`), null);
+    } else setTeam(key, v);
+    renderLobby();
+  }
+  function chip(key, p) {
+    const color = p.team === null || p.team === undefined ? '#fff' : TEAMS[p.team].color;
+    return `<button class="pchip ${p.bot ? 'bot' : ''}" data-key="${esc(key)}" style="--c:${color}" aria-label="${p.bot ? '가상 학생' : p.no + '번 학생'} 옮기기">${p.bot ? '가상' : p.no + '번'}</button>`;
+  }
   function renderLobby() {
     const box = $('#lobbyTeams');
+    const random = G.assign === 'random';
+    $('#assignBar').classList.toggle('hidden', !random);
+    $('#lobbyHint').textContent = random
+      ? '학생은 방 코드와 출석번호만 넣고 들어와요. 다 들어오면 [모둠 랜덤으로 섞기]를 누르세요. 학생 칸을 누르면 모둠을 바꿀 수 있어요.'
+      : '학생이 탭에서 자기 모둠과 번호를 골라요. 학생 칸을 누르면 다른 모둠으로 옮기거나 내보낼 수 있어요.';
     box.style.gridTemplateColumns = `repeat(${G.teamCount}, minmax(0, 1fr))`;
     box.innerHTML = '';
     for (let t = 0; t < G.teamCount; t++) {
@@ -133,16 +213,26 @@
       const card = document.createElement('div');
       card.className = 'card t';
       card.style.background = TEAMS[t].soft;
-      card.appendChild(avatar(t, 92));
-      card.insertAdjacentHTML('beforeend', `<div>${esc(teamLabel(t))}</div><div class="dots">${m.map(([, p]) =>
-        `<span class="dot" title="${p.bot ? '가상 학생' : p.no + '번'}" style="background:${TEAMS[t].color};${p.bot ? 'border-style:dashed' : ''}"></span>`).join('')}</div><div style="font-size:17px;color:var(--ink2)">${m.length}명</div>`);
+      card.appendChild(avatar(t, 84));
+      card.insertAdjacentHTML('beforeend', `<div>${esc(teamLabel(t))} <span style="font-size:17px;color:var(--ink2)">${m.length}명</span></div>
+        <div class="chips">${m.map(([k, p]) => chip(k, p)).join('')}</div>`);
       box.appendChild(card);
     }
+    const wait = unassigned();
+    const wbox = $('#waiting');
+    wbox.classList.toggle('hidden', !wait.length);
+    wbox.innerHTML = `<b>모둠 정하는 중 ${wait.length}명</b> <span class="chips">${wait.map(([k, p]) => chip(k, p)).join('')}</span>`;
+    document.querySelectorAll('#lobby .pchip').forEach(b => b.onclick = () => adjustPlayer(b.dataset.key));
     $('#btnStart').disabled = Object.keys(G.players).length === 0;
   }
 
   /* ---------------- 진행 ---------------- */
-  function startGame() {
+  async function startGame() {
+    const wait = unassigned();
+    if (wait.length) {
+      if (!await ask(`아직 모둠이 없는 학생이 ${wait.length}명 있어요. 인원이 적은 모둠에 자동으로 넣고 시작할까요?`, '넣고 시작')) return;
+      placeUnassigned();
+    }
     show('game');
     G.round = 0;
     startQuestion();
@@ -314,7 +404,7 @@
     const showAnswer = ['reveal', 'bid', 'resolve', 'resolved'].includes(G.phase);
     const q = G.q ? { text: G.q.text, type: G.q.type, choices: G.q.choices, level: G.q.level, unit: G.q.unit } : null;
     return {
-      code: G.code, phase: G.phase, teamCount: G.teamCount, round: G.round, totalRounds: G.totalRounds,
+      code: G.code, phase: G.phase, teamCount: G.teamCount, round: G.round, totalRounds: G.totalRounds, assign: G.assign || 'choose',
       q, deadline: G.deadline || 0, paused: !!G.pausedAt,
       answer: showAnswer && G.q ? G.q.answer : null, explain: showAnswer && G.q ? G.q.explain : null,
       correct: showAnswer && G.reveal ? G.reveal.correct : null,
