@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>게임 설명 · 역사 섬 땅따먹기</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  body { background: url('images/background.jpg') center / cover, var(--sea); }
+  /* 1600×900 무대를 화면에 맞춰 확대·축소 */
+  #stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform-origin: center; }
+  .slide { position: absolute; inset: 0; padding: 56px 80px 110px; display: none; flex-direction: column; gap: 26px; }
+  .slide.on { display: flex; }
+  .slide h1 { margin: 0; font-size: 64px; line-height: 1.15; display: flex; align-items: center; gap: 18px; }
+  .slide h1 .step { font-size: 30px; background: #FFD84D; border: 4px solid var(--ink); border-radius: 999px; padding: 4px 22px; }
+  .lead { font-size: 34px; line-height: 1.5; margin: 0; word-break: keep-all; }
+  .lead b { background: linear-gradient(transparent 55%, #FFE58A 55%); }
+  .big-card { background: #fff; border: 4px solid var(--ink); border-radius: 32px; box-shadow: 0 8px 0 rgba(59,53,97,.18); padding: 30px 38px; }
+  .row { display: flex; gap: 28px; align-items: stretch; }
+  .col { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+  .ico { object-fit: contain; }
+  .item { display: flex; gap: 22px; align-items: center; font-size: 34px; line-height: 1.4; word-break: keep-all; }
+  .item img { width: 96px; height: 96px; flex: none; }
+  .num { font-family: var(--round); }
+  .chip { font-family: var(--round); font-size: 30px; background: #fff; border: 3px solid var(--ink); border-radius: 999px; padding: 6px 20px; display: inline-flex; align-items: center; gap: 8px; }
+  .chars { display: flex; justify-content: center; gap: 22px; }
+  .chars .c { display: grid; justify-items: center; gap: 8px; font-family: var(--round); font-size: 30px; }
+  .chars img { width: 190px; height: 190px; object-fit: contain; }
+  .map { width: 100%; height: 100%; }
+  .mapbox { flex: 1.1; min-height: 0; }
+  .eq { font-family: var(--round); font-size: 40px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .eq .op { color: var(--ink2); }
+  .sackwrap { display: grid; justify-items: center; gap: 6px; font-family: var(--round); font-size: 30px; }
+  .sackwrap .sack { width: 140px; height: 140px; border-radius: 50%; border: 4px solid var(--ink); display: grid; place-items: center; }
+  .sackwrap .sack img { width: 80%; height: 80%; }
+  .sackwrap .amt { font-size: 60px; line-height: 1; }
+  .win { color: var(--ok); }
+  .promise { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .promise .p { background: #fff; border: 4px solid var(--ink); border-radius: 26px; padding: 22px 26px; font-size: 32px; line-height: 1.4; display: flex; gap: 16px; align-items: center; word-break: keep-all; }
+  .promise .p .n { font-family: var(--round); width: 56px; height: 56px; flex: none; border-radius: 50%; background: #FFD84D; border: 4px solid var(--ink); display: grid; place-items: center; font-size: 30px; }
+
+  /* 아래 조작 막대 */
+  .nav { position: absolute; left: 0; right: 0; bottom: 24px; display: flex; justify-content: center; align-items: center; gap: 18px; }
+  .dots { display: flex; gap: 10px; }
+  .dots button { width: 20px; height: 20px; min-height: 0; padding: 0; border-radius: 50%; border: 3px solid var(--ink); background: #fff; }
+  .dots button[aria-current="true"] { background: var(--ink); }
+  .nav .btn { font-size: 26px; }
+  .close { position: absolute; top: 20px; right: 24px; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 1. 표지 -->
+  <section class="slide" style="align-items:center;justify-content:center;text-align:center;gap:34px">
+    <h1 style="font-size:96px">역사 섬 땅따먹기</h1>
+    <div class="chars" id="chars1"></div>
+    <p class="lead">문제를 맞혀 <b>코인</b>을 모으고, 몰래 걸어서 <b>섬</b>을 차지해요!</p>
+  </section>
+
+  <!-- 2. 규칙 3줄 -->
+  <section class="slide">
+    <h1>규칙은 딱 3줄!</h1>
+    <div class="big-card col" style="gap:30px;justify-content:center;flex:1">
+      <div class="item"><img class="ico" src="images/coin.png" alt=""><div><b>문제를 맞히면 코인</b>을 받아요</div></div>
+      <div class="item"><img class="ico" src="images/sack.png" alt=""><div>원하는 땅에 <b>코인을 몰래 걸어요.</b> 가장 많이 건 모둠이 가져가요</div></div>
+      <div class="item"><img class="ico" src="images/crown.png" alt=""><div>끝날 때 <b>땅 점수가 가장 높은 모둠</b>이 이겨요</div></div>
+    </div>
+  </section>
+
+  <!-- 3. 문제 풀기 -->
+  <section class="slide">
+    <h1><span class="step">1단계</span>문제 풀기</h1>
+    <div class="row" style="flex:1">
+      <div class="big-card col" style="justify-content:center">
+        <p class="lead">TV에 문제가 나오면 <b>각자 탭으로</b> 답을 골라 <b>제출</b>해요.</p>
+        <p class="lead">제출했으면 <b>탭을 내려놓고 TV</b>를 봐요.</p>
+        <p class="lead">정답을 <b>소리 내서 말하면 안 돼요!</b></p>
+      </div>
+      <div class="big-card col" style="flex:.7;justify-content:center;align-items:center;gap:18px">
+        <img class="ico" src="images/hourglass.png" alt="" style="width:150px;height:150px">
+        <div class="chip">쉬운 문제 20초</div><div class="chip">보통 문제 30초</div><div class="chip">어려운 문제 40초</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 코인 받기 -->
+  <section class="slide">
+    <h1><span class="step">2단계</span>코인 받기</h1>
+    <div class="big-card col" style="flex:1;justify-content:center;gap:26px">
+      <div class="eq">맞힌 친구 1명 <span class="op">=</span> <img class="ico" src="images/coin.png" alt="" style="width:64px;height:64px"> 1개</div>
+      <div class="eq">모둠원 <b>전원 정답</b> <span class="op">→</span> 보너스 <img class="ico" src="images/coin.png" alt="" style="width:64px;height:64px"> +2</div>
+      <div class="eq">반 전체 정답률 <b>70% 넘으면</b> <span class="op">→</span> 모든 모둠 <img class="ico" src="images/coin.png" alt="" style="width:64px;height:64px"> +3</div>
+      <p class="lead" style="color:var(--ink2)">예) 5명 중 4명 정답 → 4개 · 5명 모두 정답 → 5 + 2 = 7개<br>그러니까 <b>서로 가르쳐 주면</b> 모두에게 좋아요!</p>
+    </div>
+  </section>
+
+  <!-- 5. 땅 고르기 -->
+  <section class="slide">
+    <h1><span class="step">3단계</span>땅 고르기</h1>
+    <div class="row" style="flex:1;min-height:0">
+      <div class="big-card col" style="justify-content:center">
+        <p class="lead">우리 땅과 <b>맞닿은 칸</b>만 반짝여요.</p>
+        <p class="lead">모둠원 모두 가고 싶은 칸을 <b>눌러서 투표</b>해요.</p>
+        <p class="lead">이번 <b>대표</b>가 칸과 걸 코인 수를 정해서 <b>확정!</b></p>
+        <p class="lead" style="color:var(--ink2);font-size:28px">대표는 라운드마다 번호 순서대로 바뀌어요. 코인은 다음 라운드로 모아 둘 수도 있어요.</p>
+      </div>
+      <div class="big-card mapbox"><svg class="map" id="map5" role="img" aria-label="걸 수 있는 칸이 반짝이는 지도 예시"></svg></div>
+    </div>
+  </section>
+
+  <!-- 6. 두근두근 공개 -->
+  <section class="slide">
+    <h1><span class="step">4단계</span>두근두근 공개</h1>
+    <div class="row" style="flex:1">
+      <div class="big-card col" style="justify-content:center">
+        <p class="lead">TV에서 칸마다 누가 얼마나 걸었는지 공개해요.</p>
+        <p class="lead"><b>가장 많이 건 모둠</b>이 그 땅을 가져가요.</p>
+        <p class="lead">건 코인은 <b>이기든 지든 사라져요.</b></p>
+        <p class="lead">똑같이 걸었으면 <b>땅이 적은 모둠</b>이 가져가요.</p>
+      </div>
+      <div class="big-card col" style="flex:.85;justify-content:center;align-items:center;gap:24px">
+        <div style="font-family:var(--round);font-size:40px"><img class="ico" src="images/star.png" alt="" style="width:52px;height:52px;vertical-align:-10px"> 프랑스 혁명</div>
+        <div class="row" id="sacks6" style="gap:40px"></div>
+        <div style="font-family:var(--round);font-size:40px" class="win">멍이 모둠 획득!</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. 빼앗기와 지키기 -->
+  <section class="slide">
+    <h1><span class="step">꿀팁</span>빼앗기와 지키기</h1>
+    <div class="row" style="flex:1">
+      <div class="big-card col" style="justify-content:center">
+        <p class="lead">다른 모둠 땅에도 걸 수 있어요. 이기면 <b>빼앗아요!</b></p>
+        <p class="lead">빼앗으려면 주인이 그 칸에 건 코인보다 <b>더 많이</b> 걸어야 해요.</p>
+        <p class="lead">우리 땅이 위험하면 <b>우리 땅에 코인을 걸어서 지켜요.</b></p>
+      </div>
+      <div class="big-card col" style="flex:.85;justify-content:center;align-items:center;gap:24px">
+        <div class="row" id="sacks7" style="gap:40px"></div>
+        <div style="font-family:var(--round);font-size:36px;text-align:center">공격 3 · 수비 3<br><span class="win">→ 같으면 주인이 지켜요!</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. 특별한 칸 -->
+  <section class="slide">
+    <h1>특별한 칸</h1>
+    <div class="big-card col" style="flex:1;justify-content:center;gap:30px">
+      <div class="item"><img class="ico" src="images/star.png" alt=""><div><b>보물 칸</b>: 1칸이 <b>3점!</b> 가운데와 그 주변에 있어요</div></div>
+      <div class="item"><img class="ico" src="images/wall.png" alt=""><div><b>요새 칸</b>: 한 번 차지하면 <b>끝까지 빼앗기지 않아요</b></div></div>
+      <div class="item"><img class="ico" src="images/flag.png" alt=""><div><b>출발 칸</b>: 우리 모둠이 처음 가진 땅. 빼앗기지 않아요</div></div>
+    </div>
+  </section>
+
+  <!-- 9. 점수 계산 -->
+  <section class="slide">
+    <h1>점수 계산</h1>
+    <div class="row" style="flex:1">
+      <div class="big-card col" style="justify-content:center;gap:28px">
+        <div class="eq">땅 1칸 <span class="op">=</span> 1점 <span class="op">·</span> <img class="ico" src="images/star.png" alt="" style="width:56px;height:56px"> 보물 칸 <span class="op">=</span> 3점</div>
+        <div class="eq"><span class="op">+</span> 가장 크게 <b>이어진 땅</b>을 가진 모둠 <span class="op">+</span>5점</div>
+        <div class="eq"><span class="op">+</span> <b>비밀 미션</b> 성공 점수</div>
+      </div>
+      <div class="big-card col" style="flex:.8;justify-content:center;align-items:center;gap:16px;text-align:center">
+        <img class="ico" src="images/letter.png" alt="" style="width:150px;height:150px">
+        <p class="lead">비밀 미션은 <b>우리 모둠 탭에만</b> 보여요.<br>다른 모둠에게 들키지 마요!</p>
+        <p class="lead" style="color:var(--ink2);font-size:28px">마지막 결과 발표 때 공개해요</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. 교실 약속 -->
+  <section class="slide">
+    <h1>우리의 약속</h1>
+    <div class="promise" style="flex:1">
+      <div class="p"><span class="n">1</span>게임 화면 말고 다른 앱은 열지 않아요</div>
+      <div class="p"><span class="n">2</span>제출한 뒤에는 탭을 내려놓고 TV를 봐요</div>
+      <div class="p"><span class="n">3</span>정답을 소리 내서 말하지 않아요. 상의는 작게!</div>
+      <div class="p"><span class="n">4</span>틀린 친구를 탓하지 않고 알려 줘요</div>
+    </div>
+  </section>
+
+  <!-- 11. 시작 -->
+  <section class="slide" style="align-items:center;justify-content:center;text-align:center;gap:30px">
+    <h1 style="font-size:80px">첫 라운드는 연습이에요!</h1>
+    <div class="chars" id="chars11"></div>
+    <p class="lead">연습 라운드는 점수에 들어가지 않아요. 자, 시작해 볼까요?</p>
+  </section>
+
+  <div class="nav">
+    <button class="btn small" id="prev" aria-label="이전 장">◀ 이전</button>
+    <div class="dots" id="dots"></div>
+    <button class="btn small primary" id="next" aria-label="다음 장">다음 ▶</button>
+  </div>
+  <button class="btn small close hidden" id="close">설명 닫기 ✕</button>
+</div>
+
+<script src="js/hexmap.js"></script>
+<script src="js/grade.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/common.js"></script>
+<script>
+(function () {
+  const { TEAMS, buildNamedMap, drawMap } = Common;
+  const $ = s => document.querySelector(s);
+  const embed = new URLSearchParams(location.search).has('embed');
+  const slides = [...document.querySelectorAll('.slide')];
+  let i = 0;
+
+  // 무대 크기 맞추기
+  function fit() {
+    const s = Math.min(innerWidth / 1600, innerHeight / 900);
+    $('#stage').style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  addEventListener('resize', fit); fit();
+
+  // 캐릭터 줄
+  const chars = (box, happy) => {
+    box.innerHTML = TEAMS.map((t, k) => `<div class="c ${happy ? 'bounce' : ''}" style="animation-delay:${k * .12}s">
+      <img src="images/team${k + 1}${happy ? '_happy' : ''}.png" alt="${t.animal}"><span>${k + 1}모둠 ${t.name}</span></div>`).join('');
+  };
+  chars($('#chars1')); chars($('#chars11'), true);
+
+  // 땅 고르기 예시 지도: 1모둠(냥이)이 몇 칸 가진 상태, 걸 수 있는 칸이 반짝임
+  const cells = buildNamedMap(6);
+  ['0,-2', '1,-3', '-1,-2'].forEach(id => { cells[id].owner = 0; });
+  cells['1,-2'].owner = 1;
+  drawMap($('#map5'), cells, { legal: Rules.legalTargets(cells, 0), votes: { '1,-2': 2, '0,-1': 1 } });
+
+  // 주머니 그림
+  const sack = (team, amt, win) => `<div class="sackwrap"><div class="sack" style="background:${TEAMS[team].color}"><img class="ico" src="images/sack.png" alt=""></div>
+    <div>${TEAMS[team].name}</div><div class="amt ${win ? 'win' : ''}">${amt}</div></div>`;
+  $('#sacks6').innerHTML = sack(0, 3) + sack(1, 5, true) + sack(4, 2);
+  $('#sacks7').innerHTML = sack(2, 3) + sack(3, 3, true).replace(`${TEAMS[3].name}</div>`, `${TEAMS[3].name} (주인)</div>`);
+
+  // 넘기기
+  $('#dots').innerHTML = slides.map((_, k) => `<button aria-label="${k + 1}번째 장"></button>`).join('');
+  const dots = [...$('#dots').children];
+  function go(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    dots.forEach((d, k) => d.setAttribute('aria-current', k === i));
+    $('#prev').disabled = i === 0;
+    const last = i === slides.length - 1;
+    $('#next').textContent = last ? (embed ? '설명 끝 ✓' : '처음으로') : '다음 ▶';
+    slides[i].querySelectorAll('.big-card, .p, .chars .c').forEach((e, k) => { e.classList.remove('pop'); void e.offsetWidth; e.style.animationDelay = (k * .08) + 's'; e.classList.add('pop'); });
+  }
+  function next() {
+    if (i === slides.length - 1) { if (embed) return close(); return go(0); }
+    go(i + 1);
+  }
+  function close() { if (embed) parent.postMessage({ tg: 'closeRules' }, '*'); }
+  $('#prev').onclick = () => go(i - 1);
+  $('#next').onclick = next;
+  dots.forEach((d, k) => d.onclick = () => go(k));
+  if (embed) { $('#close').classList.remove('hidden'); $('#close').onclick = close; }
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); go(i - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+    else if (e.key === 'Escape') close();
+    else if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); }
+  });
+  go(0);
+})();
+</script>
+</body>
+</html>

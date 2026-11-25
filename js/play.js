@@ -17,6 +17,7 @@
   const R = p => `rooms/${me.room}/${p}`;
   // 데모 모드에서는 창마다 다른 학생이므로 창별 저장소를 씀
   const store = db.mode === 'demo' ? sessionStorage : localStorage;
+  const ME_KEY = 'tg-me' + (params.get('slot') || '');
 
   /* ---------------- 접속 ---------------- */
   function joinScreen(err) {
@@ -75,7 +76,7 @@
       if (subs.players) subs.players();
       me = { room: code, team, no, key: `${team}-${no}` };
       await db.set(`rooms/${code}/players/${me.key}`, { team, no, ts: Date.now() });
-      try { store.setItem('tg-me', JSON.stringify(me)); } catch (e) { /* 저장 불가 */ }
+      try { store.setItem(ME_KEY, JSON.stringify(me)); } catch (e) { /* 저장 불가 */ }
       SFX.ok();
       startPlaying();
     };
@@ -89,7 +90,7 @@
     $('#bar').style.borderLeft = `12px solid ${TEAMS[me.team].color}`;
     listen('mission', R(`missions/${me.team}`), m => { mission = m; if (S && S.phase === 'lobby') render(true); });
     listen('state', R('state'), st => {
-      if (!st) { store.removeItem('tg-me'); me = null; screenKey = ''; return joinScreen('게임이 끝났거나 방이 사라졌어요'); }
+      if (!st) { store.removeItem(ME_KEY); me = null; screenKey = ''; return joinScreen('게임이 끝났거나 방이 사라졌어요'); }
       const prevRound = S ? S.round : null;
       S = st;
       if (S.round !== prevRound) {
@@ -146,7 +147,7 @@
     const draw = () => {
       d.innerHTML = open
         ? `<div style="font-size:16px;color:var(--ink2)">우리 모둠 비밀 미션 (다른 모둠에게 보여 주지 마요!)</div><div class="m">${esc(mission)}</div><button class="btn small">접기</button>`
-        : `<div class="m">비밀 미션 편지가 도착했어요</div><button class="btn small primary">열어 보기</button>`;
+        : `<img class="ico bounce" src="images/letter.png" alt="" style="width:84px;height:84px;margin:0 auto"><div class="m">비밀 미션 편지가 도착했어요</div><button class="btn small primary">열어 보기</button>`;
       d.querySelector('button').onclick = () => { open = !open; draw(); };
     };
     draw();
@@ -288,6 +289,7 @@
     const av = avatar(me.team, 160, mine.place === 1 ? 'happy' : null);
     if (mine.place === 1) av.classList.add('bounce');
     c.appendChild(av);
+    if (mine.place === 1) c.insertAdjacentHTML('afterbegin', '<img class="ico" src="images/chest.png" alt="" style="width:120px;height:120px">');
     c.insertAdjacentHTML('beforeend', `<div class="big">${mine.place}등! ${mine.total}점</div>
       <div class="mid">땅 ${mine.land}점 + 가장 큰 땅 ${mine.region}점 + 비밀 미션 ${mine.mission}점<br>
       미션 "${esc(mine.missionText)}" ${mine.mission ? '성공!' : '실패'}</div><div class="mid">수고했어요! 오늘 틀린 문제는 꼭 다시 봐요</div>`);
@@ -300,13 +302,25 @@
     const el = $('#ptimer');
     if (!S || !(S.phase === 'question' || S.phase === 'bid') || S.paused) { el.classList.add('hidden'); return; }
     const left = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000));
-    el.textContent = left; el.classList.remove('hidden'); el.classList.toggle('hurry', left <= 5);
+    el.innerHTML = `<img class="ico" src="images/hourglass.png" alt="" style="width:24px;height:24px"> ${left}`; el.classList.remove('hidden'); el.classList.toggle('hurry', left <= 5);
   }, 250);
 
   /* ---------------- 시작 ---------------- */
+  async function autoJoin(room, team, no) {
+    const st = await db.once(`rooms/${room}/state`);
+    if (!st) return joinScreen('방을 찾을 수 없어요');
+    me = { room, team, no, key: `${team}-${no}` };
+    await db.set(`rooms/${room}/players/${me.key}`, { team, no, ts: Date.now() });
+    try { store.setItem(ME_KEY, JSON.stringify(me)); } catch (e) { /* 저장 불가 */ }
+    startPlaying();
+  }
+
   (async function boot() {
+    if (params.get('room') && params.get('team') !== null && params.get('no')) {
+      return autoJoin(params.get('room'), +params.get('team'), +params.get('no'));
+    }
     let saved = null;
-    try { saved = JSON.parse(store.getItem('tg-me') || 'null'); } catch (e) { /* 없음 */ }
+    try { saved = JSON.parse(store.getItem(ME_KEY) || 'null'); } catch (e) { /* 없음 */ }
     const room = params.get('room');
     if (saved && (!room || room === saved.room) && !params.has('new')) {
       const st = await db.once(`rooms/${saved.room}/state`);

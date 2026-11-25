@@ -37,36 +37,54 @@
     return e;
   };
 
+  // 섬 둘레 바다에 놓는 소품 (TV·설명 화면에서만): [그림, 가운데 x, 가운데 y, 크기]
+  const DECOR = [
+    ['deco_palm', -345, -120, 120], ['deco_rocks', -360, 130, 96], ['deco_shells', -255, 235, 76],
+    ['deco_lighthouse', 350, -115, 130], ['deco_ship', 345, 150, 124], ['deco_gull', 250, -228, 84]
+  ];
+
   /**
    * 지도 그리기.
-   * opts: { owners:{id:team}, legal:[ids], selected:id, votes:{id:n}, onPick(id), highlight:id, showNames }
+   * opts: { owners:{id:team}, legal:[ids], selected:id, votes:{id:n}, onPick(id), highlight:id, showNames, decor }
    */
   function drawMap(svg, cells, opts) {
     opts = opts || {};
-    const size = 46, w = size * Math.sqrt(3) * 7 + 20, h = size * 1.5 * 6 + size * 2 + 20;
+    const size = 46;
+    // 타일 그림(images/tile_*.png, 200×214)의 윗면을 정육각형에 맞춘다: 윗면 높이 = 2R, 그림 높이는 두께까지 조금 더
+    const RT = size - 1.5, TW = Math.sqrt(3) * RT, TH = 2 * RT * (214 / 199.7);
+    const w = opts.decor ? 860 : size * Math.sqrt(3) * 7 + 44;
+    const h = size * 1.5 * 6 + size * 2 + 52;
     svg.setAttribute('viewBox', `${-w / 2} ${-h / 2} ${w} ${h}`);
     svg.innerHTML = '';
     const legal = new Set(opts.legal || []);
-    const defs = el('defs', {}, svg);
-    const f = el('filter', { id: 'sh', x: '-20%', y: '-20%', width: '140%', height: '150%' }, defs);
-    el('feDropShadow', { dx: 0, dy: 4, stdDeviation: 0, 'flood-color': '#3B3561', 'flood-opacity': 0.18 }, f);
 
+    if (opts.decor) {
+      const d = el('g', { 'aria-hidden': 'true' }, svg);
+      DECOR.forEach(([name, x, y, s], k) => el('image', { href: `images/${name}.png`, x: x - s / 2, y: y - s / 2, width: s, height: s, class: 'decor', style: `animation-delay:${k * 0.6}s` }, d));
+    }
+    // 섬 테두리(모래사장): 모든 칸을 조금 크게 한 번 더 그려 아래에 깐다
+    const island = el('g', { 'aria-hidden': 'true' }, svg);
     for (const c of Object.values(cells)) {
+      const { x, y } = HexMap.toPixel(c, size);
+      el('polygon', { points: HexMap.hexPoints(x, y + 4, size + 9), fill: '#F7E3B5', stroke: '#F7E3B5', 'stroke-width': 10, 'stroke-linejoin': 'round' }, island);
+    }
+    // 위쪽 줄부터 그려야 아래 칸이 위 칸의 두께를 자연스럽게 덮는다
+    const order = Object.values(cells).sort((a, b) => a.r - b.r || a.q - b.q);
+    for (const c of order) {
       const owner = opts.owners ? (opts.owners[c.id] ?? null) : c.owner;
+      const mine = owner !== null && owner !== undefined;
       const { x, y } = HexMap.toPixel(c, size);
       const g = el('g', { class: 'cell' + (legal.has(c.id) ? ' legal' : '') + (opts.selected === c.id ? ' selected' : '') + (opts.highlight === c.id ? ' hl' : ''), 'data-id': c.id }, svg);
-      let fill = '#FFF6E0';
-      if (owner !== null && owner !== undefined) fill = TEAMS[owner].color;
-      else if (c.type === 'treasure') fill = '#FFE58A';
-      else if (c.type === 'fort') fill = '#D9DCE3';
-      el('polygon', { points: HexMap.hexPoints(x, y, size - 3), fill, stroke: '#3B3561', 'stroke-width': 3, 'stroke-linejoin': 'round', filter: 'url(#sh)', class: 'hex' }, g);
+      const tile = mine ? `t${owner + 1}` : c.type === 'treasure' ? 'treasure' : c.type === 'fort' ? 'fort' : 'empty';
+      el('image', { href: `images/tile_${tile}.png`, x: x - TW / 2, y: y - RT, width: TW, height: TH, preserveAspectRatio: 'none' }, g);
+      // 반짝임 테두리·누르는 자리 (보이지 않는 육각형)
+      el('polygon', { points: HexMap.hexPoints(x, y, RT - 2), fill: 'transparent', stroke: 'none', 'stroke-linejoin': 'round', class: 'hex' }, g);
 
-      // 칸 종류 표시
-      if (c.type === 'treasure') star(g, x, y - 14, owner != null ? '#FFF3B0' : '#F2B705');
-      if (c.type === 'fort') wall(g, x, y - 14, owner != null ? '#FFFFFF' : '#8A90A0');
-      if (c.type === 'start' && owner != null) flag(g, x, y - 14);
+      // 칸 종류 표시 (images/ 의 아이콘)
+      const ic = c.type === 'treasure' ? 'star' : c.type === 'fort' ? 'wall' : (c.type === 'start' && mine) ? 'flag' : null;
+      if (ic) el('image', { href: `images/${ic}.png`, x: x - 15, y: y - 32, width: 30, height: 30 }, g);
       if (opts.showNames !== false) {
-        const t = el('text', { x, y: y + (c.type === 'normal' ? 5 : 14), 'text-anchor': 'middle', class: 'cname', fill: owner != null ? '#FFFFFF' : '#4A4466' }, g);
+        const t = el('text', { x, y: y + (c.type === 'normal' ? 5 : 14), 'text-anchor': 'middle', class: 'cname' + (mine ? ' on' : '') }, g);
         t.textContent = c.name.length > 6 ? c.name.slice(0, 5) + '…' : c.name;
       }
       if (opts.votes && opts.votes[c.id]) {
@@ -77,17 +95,6 @@
       if (opts.onPick && legal.has(c.id)) g.addEventListener('click', () => opts.onPick(c.id));
     }
   }
-  function star(g, x, y, color) {
-    const pts = []; for (let i = 0; i < 10; i++) { const r = i % 2 ? 6 : 13, a = Math.PI / 5 * i - Math.PI / 2; pts.push((x + r * Math.cos(a)).toFixed(1) + ',' + (y + r * Math.sin(a)).toFixed(1)); }
-    el('polygon', { points: pts.join(' '), fill: color, stroke: '#3B3561', 'stroke-width': 2, 'stroke-linejoin': 'round' }, g);
-  }
-  function wall(g, x, y, color) {
-    el('path', { d: `M${x - 13} ${y + 8} V${y - 6} h5 v4 h5 v-4 h6 v4 h5 v-4 h5 V${y + 8} Z`, fill: color, stroke: '#3B3561', 'stroke-width': 2, 'stroke-linejoin': 'round' }, g);
-  }
-  function flag(g, x, y) {
-    el('path', { d: `M${x - 6} ${y + 10} V${y - 10} L${x + 10} ${y - 5} L${x - 6} ${y}`, fill: '#fff', stroke: '#3B3561', 'stroke-width': 2, 'stroke-linejoin': 'round' }, g);
-  }
-
   /** 임시 캐릭터(도형). 진짜 그림은 images/team1.png ~ team6.png 를 넣으면 자동 교체 */
   function critterSVG(team, mood) {
     const T = TEAMS[team], ink = '#3B3561', c = T.color;
@@ -170,7 +177,7 @@
   /* 배경 그림이 있으면 자동 사용 */
   (function () {
     const bg = new Image();
-    bg.onload = () => document.body.classList.add('has-bg');
+    bg.onload = () => { if (!document.body.hasAttribute('data-nobg')) document.body.classList.add('has-bg'); };
     bg.src = 'images/background.jpg';
   })();
 

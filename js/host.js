@@ -5,6 +5,8 @@
   const $ = s => document.querySelector(s);
   const params = new URLSearchParams(location.search);
   const FAST = params.has('fast'); // 시험용: 시간을 짧게
+  const TEST = params.has('test'); // 테스트 창 안에서 실행
+  const SAVE_KEY = TEST ? 'tg-host-test' : 'tg-host';
   const SPEED = FAST ? 0.2 : 1;
   const BID_SECONDS = 30;
   const STEP_MS = 3400 * (FAST ? 0.4 : 1);
@@ -31,12 +33,14 @@
       if (t && !$('#bank').value.trim()) { $('#bank').value = t; bankInfo(); }
     }).catch(() => {});
     if (params.has('bots')) $('#bots').checked = true;
+    if (params.get('teams')) $('#teamCount').value = params.get('teams');
+    if (params.get('rounds')) $('#rounds').value = params.get('rounds');
     try {
-      const saved = JSON.parse(localStorage.getItem('tg-host') || 'null');
-      if (saved && saved.phase !== 'final') {
+      const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      if (saved && saved.phase !== 'final' && !params.has('auto')) {
         $('#resumeBox').classList.remove('hidden');
         $('#btnResume').onclick = () => resume(saved);
-        $('#btnDiscard').onclick = () => { localStorage.removeItem('tg-host'); $('#resumeBox').classList.add('hidden'); };
+        $('#btnDiscard').onclick = () => { localStorage.removeItem(SAVE_KEY); $('#resumeBox').classList.add('hidden'); };
       }
     } catch (e) { /* 저장된 게임 없음 */ }
     $('#btnCreate').onclick = createRoom;
@@ -77,6 +81,7 @@
   function enterLobby() {
     show('lobby');
     $('#roomCode').textContent = G.code;
+    if (window.parent !== window) window.parent.postMessage({ tg: 'room', code: G.code, teamCount: G.teamCount }, '*');
     $('#joinUrl').textContent = joinUrl();
     $('#qr').innerHTML = '';
     if (window.QRCode) new QRCode($('#qr'), { text: joinUrl(), width: 230, height: 230, colorDark: '#3B3561' });
@@ -273,7 +278,7 @@
     if (G.phase === 'question' || G.phase === 'bid') {
       const left = Math.max(0, Math.ceil((G.deadline - t) / 1000));
       const el = $('#timer');
-      el.textContent = left; el.classList.remove('hidden'); el.classList.toggle('hurry', left <= 5);
+      el.innerHTML = `<img class="ico" src="images/hourglass.png" alt="" style="width:30px;height:30px"> ${left}`; el.classList.remove('hidden'); el.classList.toggle('hurry', left <= 5);
       if (left !== lastLeft && left <= 5 && left > 0) SFX.tick();
       lastLeft = left;
       if (G.phase === 'question' && (t >= G.deadline || allAnswered())) reveal();
@@ -301,7 +306,7 @@
     };
   }
   function publish() { db.set(R('state'), publicState()); save(); }
-  function save() { try { localStorage.setItem('tg-host', JSON.stringify(G)); } catch (e) { /* 저장 공간 없음 */ } }
+  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(G)); } catch (e) { /* 저장 공간 없음 */ } }
 
   function resume(saved) {
     G = saved;
@@ -342,14 +347,11 @@
     const svg = $('#map');
     svg.style.opacity = dim ? 0.18 : 1;
     const item = G.phase === 'resolve' && G.revealList ? G.revealList[G.revealIdx] : null;
-    drawMap(svg, cellsNow(), { highlight: item ? item.cell : null });
+    drawMap(svg, cellsNow(), { highlight: item ? item.cell : null, decor: true });
   }
 
-  function sack(color) {
-    return `<svg class="sack" viewBox="0 0 100 100" aria-hidden="true"><path d="M36 30 Q50 38 64 30 L60 18 Q50 24 40 18 Z" fill="${color}" stroke="#3B3561" stroke-width="4" stroke-linejoin="round"/>` +
-      `<path d="M34 36 Q10 84 30 92 H70 Q90 84 66 36 Z" fill="${color}" stroke="#3B3561" stroke-width="4" stroke-linejoin="round"/>` +
-      `<path d="M36 34 Q50 40 64 34" fill="none" stroke="#3B3561" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="66" r="11" fill="#FFD84D" stroke="#3B3561" stroke-width="3"/></svg>`;
-  }
+  // 금화 주머니 그림 + 모둠 색 받침
+  const sack = color => `<div class="sack" style="background:${color}"><img src="images/sack.png" alt=""></div>`;
 
   function questionBlock(withAnswer) {
     const q = G.q;
@@ -384,8 +386,6 @@
       </div>`;
       o.querySelectorAll('[data-av]').forEach(e => e.replaceWith(avatar(+e.dataset.av, 54, 'happy')));
       o.querySelectorAll('[data-accept]').forEach(b => b.onclick = () => acceptAnswer(wrong[+b.dataset.accept].text));
-    } else if (G.phase === 'bid') {
-      o.innerHTML = `<div class="card bid-hint">맞닿은 칸에 코인을 몰래 걸어요! 대표가 확정해요</div>`;
     }
     renderSide();
   }
@@ -395,7 +395,10 @@
     const side = $('#sidecard');
     side.innerHTML = '';
     $('#board').classList.toggle('hidden', G.phase === 'resolve');
-    if (G.phase === 'resolve' && G.revealList) {
+    if (G.phase === 'bid') {
+      side.innerHTML = `<div class="card summary"><div class="msg"><img class="ico" src="images/sack.png" alt="" style="width:56px;height:56px;vertical-align:-14px"> 몰래 걸기 시간!</div>
+        <div style="font-size:18px;line-height:1.5;text-align:center">우리 땅과 맞닿은 칸에 코인을 걸어요.<br>모둠원은 투표, 대표가 확정!</div></div>`;
+    } else if (G.phase === 'resolve' && G.revealList) {
       const it = G.revealList[G.revealIdx];
       if (!it) return;
       const icon = it.type === 'treasure' ? '★ ' : '';
@@ -464,7 +467,7 @@
       box.appendChild(row);
     }
   }
-  const crown = () => `<svg class="crown" viewBox="0 0 24 16" aria-label="1위"><path d="M2 14 L2 4 L7 8 L12 2 L17 8 L22 4 L22 14 Z" fill="#FFD84D" stroke="#3B3561" stroke-width="2" stroke-linejoin="round"/></svg> `;
+  const crown = () => `<img class="crown" src="images/crown.png" alt="1위"> `;
 
   function renderFinal() {
     const box = $('#ranks');
@@ -487,7 +490,7 @@
     };
     $('#btnDelete').onclick = () => {
       if (!confirm('이 방의 기록을 모두 지울까요?')) return;
-      db.remove(`rooms/${G.code}`).then(() => { localStorage.removeItem('tg-host'); location.href = location.pathname; });
+      db.remove(`rooms/${G.code}`).then(() => { localStorage.removeItem(SAVE_KEY); location.href = location.pathname; });
     };
   }
 
@@ -531,6 +534,12 @@
       setTimeout(() => { if (G && G.phase === 'bid' && G.round === round) db.set(R(`votes/${round}/${k}`), pick(legal)); }, (800 + Math.random() * 4000) * SPEED);
     }
   }
+
+  /* ---------------- 게임 설명(대기 화면 위에 겹쳐 띄움) ---------------- */
+  function openRules() { $('#rulesFrame').src = 'rules.html?embed'; $('#rulesLayer').classList.remove('hidden'); }
+  function closeRules() { $('#rulesLayer').classList.add('hidden'); $('#rulesFrame').src = 'about:blank'; }
+  $('#btnRules').onclick = openRules;
+  window.addEventListener('message', e => { if (e.data && e.data.tg === 'closeRules') closeRules(); });
 
   /* ---------------- 버튼 ---------------- */
   $('#btnNext').onclick = onNext;

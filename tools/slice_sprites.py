@@ -15,6 +15,7 @@ from PIL import Image
 PRESETS = {
     'icons': (3, 3, ['coin', 'sack', 'chest', 'wall', 'flag', 'crown', 'letter', 'star', 'hourglass']),
     'characters': (3, 2, ['team1', 'team2', 'team3', 'team4', 'team5', 'team6']),
+    'decor': (3, 2, ['deco_palm', 'deco_rocks', 'deco_ship', 'deco_shells', 'deco_gull', 'deco_lighthouse']),
 }
 OUT = Path(__file__).resolve().parent.parent / 'images'
 

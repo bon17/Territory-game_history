@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>테스트 창 · 역사 섬 땅따먹기</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; background: #EAF6FD; }
+  .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 12px 18px; background: #fff; border-bottom: 3px solid var(--ink); }
+  .tools h1 { margin: 0; font-size: 26px; display: flex; align-items: center; gap: 8px; }
+  .tools label { display: flex; align-items: center; gap: 8px; font-size: 17px; }
+  .tools select { font: inherit; padding: 6px 10px; border-radius: 10px; border: 3px solid var(--ink); background: #fff; }
+  .tools .hint { font-size: 15px; color: var(--ink2); }
+  .room { font-family: var(--round); font-size: 22px; }
+  main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 14px; padding: 14px; }
+  .pane { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+  .pane h2 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px; }
+  .pane h2 small { font-family: var(--body); font-size: 14px; color: var(--ink2); }
+  .kids { display: flex; flex-direction: column; gap: 12px; overflow: auto; min-height: 0; }
+  /* 실제 화면 크기로 띄운 뒤 칸에 맞게 줄여서 보여 준다 */
+  .screen { position: relative; width: 100%; border: 3px solid var(--ink); border-radius: 14px; overflow: hidden; background: #000; }
+  .screen iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #fff; }
+  .empty { display: grid; place-items: center; height: 100%; color: var(--ink2); font-size: 20px; text-align: center; padding: 20px; line-height: 1.6; }
+</style>
+</head>
+<body data-nobg>
+<div class="tools">
+  <h1><img class="ico" src="images/hourglass.png" alt="" style="width:34px;height:34px">테스트 창</h1>
+  <label>모둠 수 <select id="teams"><option>4</option><option>5</option><option selected>6</option></select></label>
+  <label>문제 수 <select id="rounds"><option>5</option><option selected>10</option><option>15</option></select></label>
+  <label>학생 탭 <select id="kids"><option>1</option><option selected>2</option><option>3</option></select>대</label>
+  <label><input type="checkbox" id="bots" checked> 나머지 자리는 가상 학생</label>
+  <label><input type="checkbox" id="fast" checked> 빠르게 (시간 1/5)</label>
+  <button class="btn small primary" id="go">테스트 시작</button>
+  <span class="room" id="room"></span>
+  <span class="hint">이 창은 실제 수업과 상관없어요. 기록은 이 컴퓨터에만 남아요.</span>
+</div>
+<main>
+  <section class="pane">
+    <h2>교사 화면 (TV) <small>여기서 [시작!] · [다음] 버튼을 눌러 진행해요</small></h2>
+    <div class="screen" id="tvBox" style="aspect-ratio:16/9"><div class="empty">위에서 [테스트 시작]을 누르면<br>교사 화면과 학생 탭이 함께 열려요</div></div>
+  </section>
+  <section class="pane">
+    <h2>학생 탭 (갤럭시탭) <small>직접 눌러서 답하고 땅을 골라 봐요</small></h2>
+    <div class="kids" id="kidsBox"></div>
+  </section>
+</main>
+<script src="js/common.js"></script>
+<script>
+(function () {
+  const $ = s => document.querySelector(s);
+  const TV = { w: 1600, h: 900 }, TAB = { w: 1280, h: 800 };
+  let frames = [];
+
+  function makeFrame(box, src, size, title) {
+    box.innerHTML = '';
+    box.style.aspectRatio = `${size.w} / ${size.h}`;
+    const f = document.createElement('iframe');
+    f.src = src; f.title = title;
+    f.style.width = size.w + 'px'; f.style.height = size.h + 'px';
+    box.appendChild(f);
+    frames.push({ box, f, size });
+    fit();
+    return f;
+  }
+  function fit() {
+    frames.forEach(({ box, f, size }) => { f.style.transform = `scale(${box.clientWidth / size.w})`; });
+  }
+  addEventListener('resize', fit);
+
+  $('#go').onclick = () => {
+    frames = [];
+    $('#room').textContent = '방 만드는 중…';
+    $('#kidsBox').innerHTML = '';
+    const q = new URLSearchParams({ teams: $('#teams').value, rounds: $('#rounds').value });
+    let url = `host.html?demo&test&auto&${q}`;
+    if ($('#bots').checked) url += '&bots';
+    if ($('#fast').checked) url += '&fast';
+    makeFrame($('#tvBox'), url, TV, '교사 화면');
+  };
+
+  // TV 화면이 방을 만들면 학생 탭을 연다 (1모둠 1번, 2모둠 1번, …)
+  addEventListener('message', e => {
+    if (!e.data || e.data.tg !== 'room') return;
+    $('#room').textContent = `방 코드 ${e.data.code}`;
+    const n = +$('#kids').value;
+    const box = $('#kidsBox');
+    box.innerHTML = '';
+    frames = frames.filter(x => x.box.id === 'tvBox');
+    for (let k = 0; k < n; k++) {
+      const team = k % e.data.teamCount;
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `<div style="font-family:var(--round);font-size:18px;margin-bottom:4px">${Common.teamLabel(team)} 1번 학생</div><div class="screen"></div>`;
+      box.appendChild(wrap);
+      makeFrame(wrap.querySelector('.screen'), `play.html?demo&room=${e.data.code}&team=${team}&no=1&slot=${k}`, TAB, `${team + 1}모둠 학생 탭`);
+    }
+  });
+})();
+</script>
+</body>
+</html>
