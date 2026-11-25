@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>역사 섬 땅따먹기</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { min-height: 100%; background: url('images/background.jpg') center / cover fixed, var(--sea); }
+  .home { width: min(1180px, 100%); margin: 0 auto; padding: 40px max(18px, env(safe-area-inset-left, 0px)) 48px; display: grid; gap: 28px; justify-items: center; }
+  .home h1 { margin: 0; font-size: clamp(44px, 7vw, 88px); line-height: 1.1; text-align: center; text-shadow: 0 4px 0 #fff; }
+  .sub { margin: 0; font-size: clamp(18px, 2.2vw, 24px); color: var(--ink2); text-align: center; }
+  .chars { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(6px, 1.5vw, 18px); }
+  .chars img { width: clamp(70px, 11vw, 140px); height: clamp(70px, 11vw, 140px); object-fit: contain; animation: bounce 1.6s ease-in-out infinite; }
+  .menu { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
+  .menu a { text-decoration: none; color: var(--ink); background: #fff; border: 4px solid var(--ink); border-radius: 28px; box-shadow: 0 7px 0 var(--ink);
+    padding: 22px 22px 24px; display: grid; justify-items: center; gap: 8px; text-align: center; transition: transform .1s, box-shadow .1s; }
+  .menu a:hover { transform: translateY(-3px); box-shadow: 0 10px 0 var(--ink); }
+  .menu a:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--ink); }
+  .menu a:focus-visible { outline: 5px solid #FF7A00; outline-offset: 4px; }
+  .menu img { width: 92px; height: 92px; object-fit: contain; }
+  .menu .t { font-family: var(--round); font-size: 32px; }
+  .menu .d { font-size: 17px; color: var(--ink2); line-height: 1.45; word-break: keep-all; }
+  .menu a.main { background: #FFF3B0; }
+  .note { font-size: 15px; color: var(--ink2); background: rgba(255,255,255,.85); border-radius: 14px; padding: 8px 16px; text-align: center; }
+</style>
+</head>
+<body>
+<main class="home">
+  <h1>역사 섬 땅따먹기</h1>
+  <p class="sub">문제를 맞혀 코인을 모으고, 몰래 걸어서 섬을 차지해요!</p>
+  <div class="chars" aria-hidden="true">
+    <img src="images/team1.png" alt="" style="animation-delay:0s"><img src="images/team2.png" alt="" style="animation-delay:.15s">
+    <img src="images/team3.png" alt="" style="animation-delay:.3s"><img src="images/team4.png" alt="" style="animation-delay:.45s">
+    <img src="images/team5.png" alt="" style="animation-delay:.6s"><img src="images/team6.png" alt="" style="animation-delay:.75s">
+  </div>
+  <nav class="menu" aria-label="메뉴">
+    <a class="main" href="host.html"><img src="images/crown.png" alt=""><span class="t">수업 시작</span><span class="d">선생님 노트북에서 열어 TV에 띄워요.<br>방을 만들고 QR코드를 보여 줘요</span></a>
+    <a href="rules.html"><img src="images/letter.png" alt=""><span class="t">게임 설명</span><span class="d">시작 전에 학생들에게<br>규칙을 설명하는 11장 슬라이드</span></a>
+    <a href="play.html"><img src="images/coin.png" alt=""><span class="t">학생 입장</span><span class="d">학생 탭에서 열어요.<br>TV의 방 코드를 넣고 들어가요</span></a>
+    <a href="test.html"><img src="images/hourglass.png" alt=""><span class="t">테스트</span><span class="d">교사 화면과 학생 탭을<br>한 화면에서 미리 시험해 봐요</span></a>
+  </nav>
+  <div class="note" id="mode"></div>
+</main>
+<script src="firebase-config.js"></script>
+<script>
+  // 실제 접속 모드인지 알려 주기
+  (function () {
+    var cfg = window.FIREBASE_CONFIG;
+    document.getElementById('mode').textContent = cfg && cfg.apiKey
+      ? '실제 수업 모드: 학생 탭에서 접속할 수 있어요'
+      : '지금은 데모 모드예요. Firebase를 연결하기 전에는 이 컴퓨터 안에서만 시험할 수 있어요';
+  })();
+</script>
+</body>
+</html>
