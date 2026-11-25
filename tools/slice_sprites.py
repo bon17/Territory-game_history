@@ -50,7 +50,28 @@ def remove_background(img, tol=60):
     return img
 
 
+def save_square(art, name):
+    """그림 부분만 남겨 정사각형(최대 512px) PNG로 저장."""
+    box = art.getchannel('A').point(lambda a: 255 if a > 20 else 0).getbbox()
+    if not box:
+        print(f'{name}: 그림이 비어 있어 건너뜀')
+        return
+    art = art.crop(box)
+    side = int(max(art.size) * 1.04)
+    square = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+    square.paste(art, ((side - art.width) // 2, (side - art.height) // 2))
+    if side > 512:
+        square = square.resize((512, 512), Image.LANCZOS)
+    OUT.mkdir(exist_ok=True)
+    square.save(OUT / f'{name}.png', optimize=True)
+    print(f'{name}.png 저장 ({square.width}px)')
+
+
 def main():
+    # 한 장짜리: python3 tools/slice_sprites.py 그림.webp single team5
+    if len(sys.argv) == 4 and sys.argv[2] == 'single':
+        save_square(remove_background(Image.open(sys.argv[1])), sys.argv[3])
+        return
     if len(sys.argv) < 3 or sys.argv[2] not in PRESETS:
         print(__doc__)
         sys.exit(1)

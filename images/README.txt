@@ -3,8 +3,8 @@
 
   team1.png ~ team6.png             모둠 캐릭터 (1 고양이, 2 강아지, 3 토끼, 4 곰, 5 오리, 6 햄스터)
   team1_happy.png ~ team6_happy.png  기뻐하는 표정 (정답·1등일 때)
-  background.png                     바다 배경 (16:9)
+  background.jpg                     바다 배경 (16:9)
 
-- 모두 배경이 투명한 PNG 여야 합니다(background.png 제외).
+- 모두 배경이 투명한 PNG 여야 합니다(background.jpg 제외).
 - 정사각형(1:1)이면 가장 잘 맞습니다.
 - 아이콘(금화, 주머니, 보물 상자, 성벽, 깃발, 왕관, 편지)은 그림이 오면 코드에 연결합니다.

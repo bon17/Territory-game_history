@@ -126,10 +126,13 @@
     d.style.cssText = `width:${sizePx}px;height:${sizePx}px;background:${TEAMS[team].soft}`;
     d.innerHTML = critterSVG(team, mood);
     d.title = TEAMS[team].animal;
+    // 진짜 그림: 기쁜 표정 → 기본 그림 → (없으면) 임시 도형 순서로 시도
+    const tries = mood === 'happy' ? [`images/team${team + 1}_happy.png`, `images/team${team + 1}.png`] : [`images/team${team + 1}.png`];
     const img = new Image();
     img.alt = TEAMS[team].animal;
-    img.onload = () => { d.innerHTML = ''; d.appendChild(img); };
-    img.src = `images/team${team + 1}${mood === 'happy' ? '_happy' : ''}.png`;
+    img.onload = () => { d.innerHTML = ''; d.classList.add('has-img'); d.appendChild(img); };
+    img.onerror = () => { tries.shift(); if (tries.length) img.src = tries[0]; };
+    img.src = tries[0];
     return d;
   }
 
@@ -168,7 +171,7 @@
   (function () {
     const bg = new Image();
     bg.onload = () => document.body.classList.add('has-bg');
-    bg.src = 'images/background.png';
+    bg.src = 'images/background.jpg';
   })();
 
   root.Common = { TEAMS, teamLabel, buildNamedMap, drawMap, avatar, critterSVG, PRACTICE_Q, h, esc, SFX, sound };
