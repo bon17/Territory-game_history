@@ -12,7 +12,9 @@
   #stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform-origin: center; }
   .slide { position: absolute; inset: 0; padding: 56px 80px 110px; display: none; flex-direction: column; gap: 26px; }
   .slide.on { display: flex; }
-  .slide h1 { margin: 0; font-size: 64px; line-height: 1.15; display: flex; align-items: center; gap: 18px; }
+  .slide h1 { margin: 0; font-size: 64px; line-height: 1.15; display: flex; align-items: center; gap: 18px;
+    text-shadow: 3px 3px 0 #fff, -3px 3px 0 #fff, 3px -3px 0 #fff, -3px -3px 0 #fff, 0 3px 0 #fff, 0 -3px 0 #fff, 3px 0 0 #fff, -3px 0 0 #fff; }
+  .slide h1 .step { text-shadow: none; }
   .slide h1 .step { font-size: 30px; background: #FFD84D; border: 4px solid var(--ink); border-radius: 999px; padding: 4px 22px; }
   .lead { font-size: 34px; line-height: 1.5; margin: 0; word-break: keep-all; }
   .lead b { background: linear-gradient(transparent 55%, #FFE58A 55%); }
@@ -36,6 +38,16 @@
   .sackwrap .sack img { width: 80%; height: 80%; }
   .sackwrap .amt { font-size: 60px; line-height: 1; }
   .win { color: var(--ok); }
+  .cointable { border-collapse: separate; border-spacing: 0 8px; font-size: 30px; }
+  .cointable td { padding: 4px 14px; background: var(--sand); }
+  .cointable td:first-child { border-radius: 14px 0 0 14px; white-space: nowrap; }
+  .cointable td:last-child { border-radius: 0 14px 14px 0; font-family: var(--round); font-size: 36px; text-align: right; white-space: nowrap; }
+  .cointable .pct { color: var(--ink2); font-size: 24px; }
+  .cointable .coins img { width: 40px; height: 40px; vertical-align: middle; }
+  .cointable .coins img.off { opacity: .18; filter: grayscale(1); }
+  .bonus { display: flex; gap: 18px; align-items: center; font-size: 32px; line-height: 1.35; }
+  .bonus .tag { font-family: var(--round); font-size: 24px; background: #FFD84D; border: 3px solid var(--ink); border-radius: 999px; padding: 4px 14px; flex: none; }
+  .bonus .plus { font-family: var(--round); font-size: 44px; color: var(--ok); }
   .promise { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .promise .p { background: #fff; border: 4px solid var(--ink); border-radius: 26px; padding: 22px 26px; font-size: 32px; line-height: 1.4; display: flex; gap: 16px; align-items: center; word-break: keep-all; }
   .promise .p .n { font-family: var(--round); width: 56px; height: 56px; flex: none; border-radius: 50%; background: #FFD84D; border: 4px solid var(--ink); display: grid; place-items: center; font-size: 30px; }
@@ -65,7 +77,7 @@
     <div class="big-card col" style="gap:30px;justify-content:center;flex:1">
       <div class="item"><img class="ico" src="images/coin.png" alt=""><div><b>문제를 맞히면 코인</b>을 받아요</div></div>
       <div class="item"><img class="ico" src="images/sack.png" alt=""><div>원하는 땅에 <b>코인을 몰래 걸어요.</b> 가장 많이 건 모둠이 가져가요</div></div>
-      <div class="item"><img class="ico" src="images/crown.png" alt=""><div>끝날 때 <b>땅 점수가 가장 높은 모둠</b>이 이겨요</div></div>
+      <div class="item"><img class="ico" src="images/crown.png" alt=""><div>끝날 때 <b>점수가 가장 높은 모둠</b>이 이겨요 <span style="color:var(--ink2);font-size:26px">(땅 점수 + 보너스)</span></div></div>
     </div>
   </section>
 
@@ -77,6 +89,7 @@
         <p class="lead">TV에 문제가 나오면 <b>각자 탭으로</b> 답을 골라 <b>제출</b>해요.</p>
         <p class="lead">제출했으면 <b>탭을 내려놓고 TV</b>를 봐요.</p>
         <p class="lead">정답을 <b>소리 내서 말하면 안 돼요!</b></p>
+        <p class="lead"><b>시간 안에 안 내면 틀린 것</b>으로 쳐요. 모르겠으면 일단 내요!</p>
       </div>
       <div class="big-card col" style="flex:.7;justify-content:center;align-items:center;gap:18px">
         <img class="ico" src="images/hourglass.png" alt="" style="width:150px;height:150px">
@@ -88,11 +101,19 @@
   <!-- 4. 코인 받기 -->
   <section class="slide">
     <h1><span class="step">2단계</span>코인 받기</h1>
-    <div class="big-card col" style="flex:1;justify-content:center;gap:26px">
-      <div class="eq">우리 모둠 <b>정답 비율</b>만큼 <img class="ico" src="images/coin.png" alt="" style="width:64px;height:64px"> 최대 5개</div>
-      <div class="eq">모둠원 <b>전원 정답</b> <span class="op">→</span> 보너스 <img class="ico" src="images/coin.png" alt="" style="width:64px;height:64px"> +2</div>
-      <div class="eq">반 전체 정답률 <b>70% 넘으면</b> <span class="op">→</span> 모든 모둠 <img class="ico" src="images/coin.png" alt="" style="width:64px;height:64px"> +3</div>
-      <p class="lead" style="color:var(--ink2)">예) 5명 중 4명 정답(80%) → 4개 · 4명 중 3명 정답(75%) → 4개 · 모두 정답 → 5 + 2 = 7개<br>모둠 인원이 달라도 공평해요. <b>서로 가르쳐 주면</b> 모두에게 좋아요!</p>
+    <div class="row" style="flex:1;min-height:0">
+      <div class="big-card col" style="justify-content:center;gap:14px">
+        <div class="eq" style="font-size:38px">우리 모둠 <b>정답 비율 × 5</b> <span class="op" style="font-size:28px">(반올림)</span></div>
+        <table class="cointable" aria-label="정답 비율에 따른 코인">
+          <tbody id="coinRows"></tbody>
+        </table>
+        <p class="lead" style="color:var(--ink2);font-size:26px">모둠 인원이 달라도 <b>비율</b>로 계산해서 공평해요</p>
+      </div>
+      <div class="big-card col" style="flex:.8;justify-content:center;gap:22px">
+        <div class="bonus"><span class="tag">보너스</span><div>모둠원 <b>전원 정답</b><br><span class="plus">+2</span></div></div>
+        <div class="bonus"><span class="tag">보너스</span><div>반 전체 정답률 <b>70% 이상</b><br>→ 모든 모둠 <span class="plus">+3</span></div></div>
+        <p class="lead" style="text-align:center">한 문제에 최대 <b>5 + 2 + 3 = 10개!</b><br><span style="color:var(--ink2);font-size:26px">서로 가르쳐 주면 모두에게 좋아요</span></p>
+      </div>
     </div>
   </section>
 
@@ -103,8 +124,8 @@
       <div class="big-card col" style="justify-content:center">
         <p class="lead">우리 땅과 <b>맞닿은 칸</b>만 반짝여요.</p>
         <p class="lead">모둠원 모두 가고 싶은 칸을 <b>눌러서 투표</b>해요.</p>
-        <p class="lead">이번 <b>대표</b>가 칸과 걸 코인 수를 정해서 <b>확정!</b></p>
-        <p class="lead" style="color:var(--ink2);font-size:28px">대표는 라운드마다 번호 순서대로 바뀌어요. 코인은 다음 라운드로 모아 둘 수도 있어요.</p>
+        <p class="lead">이번 <b>대표</b>가 칸과 걸 코인 수를 정해서 <b>확정!</b> 한 라운드에 <b>한 칸</b>만 걸어요.</p>
+        <p class="lead" style="color:var(--ink2);font-size:27px">대표는 라운드마다 번호 순서대로 바뀌어요. 안 쓴 코인은 다음 라운드로 모아 둘 수 있어요. 막혀서 걸 곳이 없으면 아무 빈 칸이나 고를 수 있어요.</p>
       </div>
       <div class="big-card mapbox"><svg class="map" id="map5" role="img" aria-label="걸 수 있는 칸이 반짝이는 지도 예시"></svg></div>
     </div>
@@ -222,6 +243,14 @@
       <img src="images/team${k + 1}${happy ? '_happy' : ''}.png" alt="${t.animal}"><span>${k + 1}모둠 ${t.name}</span></div>`).join('');
   };
   chars($('#chars1')); chars($('#chars11'), true);
+
+  // 코인 표: 정답 비율 × 5 (반올림)
+  const rows = [[5, 5], [5, 4], [4, 3], [4, 2], [5, 2], [5, 1]];
+  $('#coinRows').innerHTML = rows.map(([n, k]) => {
+    const c = Math.round(k / n * 5);
+    const coins = Array.from({ length: 5 }, (_, i) => `<img class="ico ${i < c ? '' : 'off'}" src="images/coin.png" alt="">`).join('');
+    return `<tr><td>${n}명 중 ${k}명 <span class="pct">(${Math.round(k / n * 100)}%)</span></td><td class="coins" aria-label="코인 ${c}개">${coins}</td><td>${c}개</td></tr>`;
+  }).join('');
 
   // 땅 고르기 예시 지도: 1모둠(냥이)이 몇 칸 가진 상태, 걸 수 있는 칸이 반짝임
   const cells = buildNamedMap(6);
