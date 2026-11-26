@@ -9,6 +9,9 @@
 | `random_teams.js` | 랜덤 배정: 출석번호 입장 → 섞기 → 옮기기 → 내보내기 → 시작 | 약 30초 |
 | `offline.js` | 오프라인 진행: 교사가 O/X·걸기 입력으로 한 판 | 약 1분 |
 | `rules_and_test_window.js` | 설명 슬라이드 14장 + 테스트 창 | 약 1분 |
+| `rep_fallback.js` | 대표가 가만히 있으면 15초 뒤 다른 모둠원이 확정 / 대표 탭이 꺼지면 다음 대표에서 빠짐 | 약 1분 |
+| `pretty_urls.js` | Netlify 식 줄인 주소(/host)로 열어도 학생 접속(QR) 주소가 맞는지 | 약 10초 |
+| `real_firebase.js` | 실제 Firebase(firebase-config.js)로 한 판 + 보안 규칙 확인, 시험 방은 지움 | 약 2분 |
 | `firebase.js` | Firebase 에뮬레이터: 익명 로그인 · 실시간 DB · 보안 규칙(7가지 차단 확인) · 한 판 | 약 2분 |
 
 ## Firebase 에뮬레이터 시험

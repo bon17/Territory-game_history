@@ -132,8 +132,8 @@
 
   /* ---------------- 대기 화면 ---------------- */
   function joinUrl() {
-    const base = location.href.split('?')[0].replace(/host\.html$/, '');
-    return `${base}play.html?room=${G.code}${FAST ? '&fast' : ''}`;
+    // 지금 주소(…/host.html 이든 Netlify 가 줄인 …/host 든)를 기준으로 학생 화면 주소를 만든다
+    return new URL(`play.html?room=${G.code}${FAST ? '&fast' : ''}`, location.href).href;
   }
   function enterLobby() {
     show('lobby');

@@ -56,6 +56,7 @@
 ## 주의할 점
 - **이 클라우드 환경**: OpenAI·Firebase 서버 접속 차단, 백그라운드 서버 실행 거부됨, 내장 브라우저 도구 없음
 - **시험 방법**: 브라우저 시험 스크립트는 `test/e2e/` (사용법은 `test/e2e/README.md`). Firebase 에뮬레이터 시험은 프록시 변수를 빼고 실행하고, DB 이름은 `demo-history-default-rtdb`. 단위 테스트는 `node test/rules.test.js` (11개)
+- **Netlify는 링크를 줄인 주소(`host.html` → `/host`)로 바꾼다.** 주소를 문자열로 이어 붙이지 말고 `new URL('play.html', location.href)`처럼 상대 주소로 만들 것 (QR 주소 버그를 이렇게 고침, `test/e2e/pretty_urls.js`)
 - Firebase SDK 주소는 `cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js` 형식(중간에 `/compat/` 없음). 예전에 틀려 있던 것을 고침
 - Artifact 미리보기에는 **빈 `firebase-config.js`를 그대로 둠**(미리보기 안에서는 외부 접속이 막혀 데모로만 돌아감). 미리보기를 다시 올릴 때 `firebase-config.js`를 `files`에 넣지 말 것
 - **Artifact 미리보기 갱신**: 첫 화면은 `index.html`을 변환한 scratchpad의 `game-preview.html`(doctype·html·head·body 제거, 링크에 `target="_blank"`). 다른 파일은 publish의 `files`로 함께 올림. 문제은행은 `questions/bank.tsv` 이름으로 올림(contentType `text/plain`)
