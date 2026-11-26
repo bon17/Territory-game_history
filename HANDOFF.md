@@ -40,7 +40,7 @@
 - 단답 채점: 띄어쓰기·대소문자 무시, 자모 끊김(`대류ㄱ봉소ㅐ령`) 허용, 오타 허용 안 함. 교사가 오답을 정답으로 인정 가능
 
 ## 남은 일
-1. **배포·리허설 (사용자 차례)**: 배포용 zip(사용자에게 보냄) 압축 풀기 → Netlify Drop에 폴더 끌어다 놓기 → 학교 와이파이 + 갤럭시탭으로 리허설
+1. **리허설 (사용자 차례)**: 학교 와이파이 + 갤럭시탭으로 리허설. 배포는 끝남(최신 버전, `test/e2e/live_site.js`로 실제 사이트에서 방 만들기·QR 주소·학생 입장 확인 완료)
    - Firebase 프로젝트 `history-island-c26b2` 설정 완료, `firebase-config.js`에 넣음
    - **실제 Firebase에서 검증 완료**: 방 만들기·학생 2명·한 판·보안 규칙 7가지 차단·방 삭제 (`test/e2e/real_firebase.js`). 학교 와이파이, 갤럭시탭 브라우저는 아직 미확인
    - 이 저장소 전용 클라우드 환경 `Territory-game_history`를 만듦(Firebase DB·로그인 서버·history-island.netlify.app 접속 허용)
