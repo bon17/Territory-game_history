@@ -38,12 +38,31 @@
   #waiting { padding: 10px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 18px; background: #fff; border-style: dashed; }
   #waiting .pchip { color: var(--ink); text-shadow: none; }
   .modal-btns { flex-wrap: wrap; }
+  /* 오프라인 진행 */
+  .offmarks { display: grid; gap: 8px; }
+  .offlab { font-size: 18px; font-weight: 700; color: var(--ink2); text-align: center; }
+  .tr.mark { cursor: pointer; font: inherit; color: var(--ink); }
+  .tr.mark .c { font-size: 40px; color: var(--no); }
+  .tr.mark.on .c { color: var(--ok); }
+  .offteams { display: grid; gap: 6px; }
+  .offteam { display: grid; grid-template-columns: 40px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left;
+    padding: 6px 10px; border: 3px solid var(--ink); border-left: 10px solid var(--c); border-radius: 14px; background: #fff; font: inherit; color: var(--ink); }
+  .offteam > :first-child { grid-row: span 2; }
+  .offteam .nm { font-family: var(--round); font-size: 20px; }
+  .offteam .nm small { font-family: var(--body); font-size: 14px; color: var(--ink2); }
+  .offteam .st { font-size: 14px; font-weight: 700; color: var(--ink2); }
+  .offteam.on { background: #FFF3B0; outline: 4px solid #FF7A00; }
+  .offteam:disabled { opacity: .5; }
+  .stepper { display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .stepper .num { font-size: 44px; min-width: 60px; text-align: center; }
   .demo-banner { background: #FFF3B0; border: 3px dashed var(--ink); border-radius: 16px; padding: 10px 18px; font-size: 18px; display: flex; gap: 14px; align-items: center; }
 
   /* 게임 화면 */
   #game { flex-direction: column; }
   .topbar { display: flex; align-items: center; gap: 16px; padding: 12px 20px; }
-  .topbar .logo { font-family: var(--round); font-size: 28px; }
+  .topbar .logo { font-family: var(--round); font-size: 24px; white-space: nowrap; }
+  .topbar .pill, .topbar .timer { white-space: nowrap; }
+  .ctrl .btn.small { font-size: 16px; padding: 6px 13px; }
   .pill { font-family: var(--round); font-size: 22px; background: #fff; border: 3px solid var(--ink); border-radius: 999px; padding: 6px 18px; }
   .pill.phase { background: #FFD84D; }
   .timer { display: flex; align-items: center; gap: 4px; font-family: var(--round); font-size: 40px; min-width: 110px; justify-content: center; background: #fff; border: 3px solid var(--ink); border-radius: 18px; padding: 0 14px; }
@@ -156,6 +175,7 @@
   <div id="waiting" class="card hidden"></div>
   <div id="lobbyTeams"></div>
   <p id="lobbyHint" class="hint" style="margin:0;font-size:17px;color:var(--ink2);text-align:center"></p>
+  <button class="btn small" id="btnOfflineStart" style="background:#fff8">와이파이가 안 되면: 오프라인으로 시작</button>
   <div style="display:flex;gap:14px"><button class="btn" id="btnRules" style="font-size:26px">게임 설명 보기</button><button class="btn go" id="btnStart" style="font-size:30px">시작!</button></div>
 </section>
 
@@ -171,11 +191,12 @@
     <div class="timer" id="timer"></div>
     <div class="ctrl">
       <button class="btn small primary" id="btnNext">다음</button>
-      <button class="btn small" id="btnPause">일시정지</button>
-      <button class="btn small" id="btnSkip">문제 넘기기</button>
-      <button class="btn small" id="btnLast">마지막 라운드로</button>
+      <button class="btn small" id="btnPause" title="일시정지">멈춤</button>
+      <button class="btn small" id="btnSkip" title="이 문제를 코인 없이 넘기기">넘기기</button>
+      <button class="btn small" id="btnLast" title="다음 문제를 마지막 라운드로">마지막으로</button>
       <button class="btn small" id="btnSound" aria-label="소리 켜기/끄기">소리 켬</button>
-      <button class="btn small" id="btnEnd">그만하기</button>
+      <button class="btn small" id="btnOffline" title="와이파이가 안 될 때: 화이트보드로 진행">오프라인</button>
+      <button class="btn small" id="btnEnd" title="게임을 끝내고 최종 결과 보기">끝내기</button>
     </div>
   </header>
   <main class="stage">
@@ -194,9 +215,9 @@
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/compat/firebase-app-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/compat/firebase-auth-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/compat/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="js/backend.js"></script>
 <script src="js/hexmap.js"></script>

@@ -1,0 +1,49 @@
+{
+  "rules": {
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && data.child('meta/hostUid').val() === auth.uid",
+
+        "meta": {
+          ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || data.child('hostUid').val() === auth.uid)",
+          ".validate": "!newData.exists() || newData.hasChildren(['hostUid', 'created'])"
+        },
+
+        "players": {
+          "$key": {
+            ".write": "auth != null && (root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid || (root.child('rooms/' + $code + '/meta').exists() && newData.child('uid').val() === auth.uid && (!data.exists() || data.child('uid').val() === auth.uid || (newData.child('no').val() === data.child('no').val() && newData.child('team').val() === data.child('team').val()))))",
+            ".validate": "!newData.exists() || (newData.child('no').isNumber() && newData.child('no').val() >= 1 && newData.child('no').val() <= 99)"
+          }
+        },
+
+        "answers": {
+          "$round": {
+            "$key": {
+              ".write": "auth != null && (root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid || (!data.exists() && root.child('rooms/' + $code + '/state/phase').val() === 'question' && root.child('rooms/' + $code + '/players/' + $key + '/uid').val() === auth.uid))",
+              ".validate": "newData.isString() && newData.val().length <= 100"
+            }
+          }
+        },
+
+        "votes": {
+          "$round": {
+            "$key": {
+              ".write": "auth != null && (root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid || root.child('rooms/' + $code + '/players/' + $key + '/uid').val() === auth.uid)",
+              ".validate": "newData.isString() && newData.val().length <= 10"
+            }
+          }
+        },
+
+        "bids": {
+          "$round": {
+            "$team": {
+              ".write": "auth != null && (root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid || (!data.exists() && newData.child('by').isString() && root.child('rooms/' + $code + '/players/' + newData.child('by').val() + '/uid').val() === auth.uid))",
+              ".validate": "newData.hasChildren(['cell', 'coins', 'by']) && newData.child('coins').isNumber() && newData.child('cell').isString()"
+            }
+          }
+        }
+      }
+    }
+  }
+}

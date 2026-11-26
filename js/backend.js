@@ -17,6 +17,8 @@
   class DemoDB {
     constructor() {
       this.mode = 'demo';
+      this.uid = 'demo';
+      this.ready = Promise.resolve();
       this.subs = [];
       this.ch = new BroadcastChannel('tg-demo');
       this.ch.onmessage = e => this._fire(e.data);
@@ -60,6 +62,7 @@
       return () => { this.subs = this.subs.filter(x => x !== s); };
     }
     once(path) { return Promise.resolve(this._read(path)); }
+    now() { return Date.now(); }
     remove(prefixPath) {
       const pre = PREFIX + split(prefixPath).join('/');
       const dead = [];
@@ -75,9 +78,14 @@
     constructor(config) {
       this.mode = 'firebase';
       if (!firebase.apps.length) firebase.initializeApp(config);
+      if (config.authEmulator) firebase.auth().useEmulator(config.authEmulator); // 시험용(실제 수업에서는 없음)
       this.db = firebase.database();
       this.ready = firebase.auth().signInAnonymously().then(c => { this.uid = c.user.uid; });
+      // 기기마다 시계가 달라도 타이머가 같게: 서버 시간과의 차이를 받아 둔다
+      this.offset = 0;
+      this.db.ref('.info/serverTimeOffset').on('value', s => { this.offset = s.val() || 0; });
     }
+    now() { return Date.now() + this.offset; }
     set(path, val) { return this.ready.then(() => this.db.ref(path).set(val === undefined ? null : val)); }
     on(path, cb) {
       const ref = this.db.ref(path); const h = s => cb(s.val());

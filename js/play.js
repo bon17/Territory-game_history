@@ -45,8 +45,9 @@
   const newKey = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   async function enter(code, key, data) {
     if (subs.players) subs.players();
+    await db.ready;
     me = { room: code, no: data.no, key };
-    await db.set(`rooms/${code}/players/${key}`, Object.assign({ ts: Date.now() }, data));
+    await db.set(`rooms/${code}/players/${key}`, Object.assign({ ts: db.now(), uid: db.uid }, data));
     try { store.setItem(ME_KEY, JSON.stringify(me)); } catch (e) { /* 저장 불가 */ }
     SFX.ok();
     startPlaying();
@@ -232,6 +233,12 @@
     const q = S.q;
     const c = document.createElement('div');
     c.className = 'card panel';
+    if (S.offline) {
+      c.classList.add('center');
+      c.innerHTML = `<div class="big">오늘은 화이트보드로 답해요</div><div class="mid">${esc(q.text)}</div><div class="mid">모둠 화이트보드에 답을 쓰고 TV를 봐요</div>`;
+      main.appendChild(c);
+      return;
+    }
     const meta = `<div class="qmeta"><span>${S.round === 0 ? '연습' : `${S.round}번째 문제`}</span><span>${esc(q.unit)}</span><span>난이도 ${esc(q.level)}</span></div>`;
     if (myAnswer != null) {
       c.classList.add('center');
@@ -375,7 +382,7 @@
   setInterval(() => {
     const el = $('#ptimer');
     if (!S || !(S.phase === 'question' || S.phase === 'bid') || S.paused) { el.classList.add('hidden'); return; }
-    const left = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000));
+    const left = Math.max(0, Math.ceil((S.deadline - db.now()) / 1000));
     el.innerHTML = `<img class="ico" src="images/hourglass.png" alt="" style="width:24px;height:24px"> ${left}`; el.classList.remove('hidden'); el.classList.toggle('hurry', left <= 5);
   }, 250);
 
