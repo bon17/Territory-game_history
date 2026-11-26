@@ -26,7 +26,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
   await r.setViewportSize({ width: 1600, height: 900 });
   await r.goto('http://game.local/rules.html');
   await r.waitForTimeout(800);
-  for (let k = 1; k <= 11; k++) {
+  for (let k = 1; k <= 14; k++) {
     await r.waitForTimeout(700);
     await r.screenshot({ path: `${OUT}/rules_${String(k).padStart(2, '0')}.png` });
     await r.keyboard.press('ArrowRight');

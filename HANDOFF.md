@@ -14,7 +14,7 @@
 | `index.html` | 메인 (수업 시작 · 게임 설명 · 학생 입장 · 테스트 버튼) |
 | `host.html` + `js/host.js` | 교사 TV 화면 (진행 상태는 이 화면만 바꿈) |
 | `play.html` + `js/play.js` | 학생 탭 (갤럭시탭, 1인 1대) |
-| `rules.html` | 규칙 설명 슬라이드 11장 (대기 화면에서 겹쳐 띄움) |
+| `rules.html` | 규칙 설명 슬라이드 14장 (대기 화면에서 겹쳐 띄움) |
 | `test.html` | 교사 화면 + 학생 탭 1~3대를 한 화면에서 시험 (데모 모드 강제) |
 | `js/rules.js` `js/hexmap.js` `js/grade.js` | 규칙 · 지도 · 채점 (node 테스트 가능) |
 | `js/common.js` | 모둠 정보, 지도 그리기, 캐릭터, 효과음 |

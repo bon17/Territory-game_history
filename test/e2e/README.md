@@ -8,7 +8,7 @@
 | `full_game.js` | 학생이 고르기 · 가상 학생 6모둠 + 학생 탭 1대, 연습 + 15문제 끝까지 | 약 3분 |
 | `random_teams.js` | 랜덤 배정: 출석번호 입장 → 섞기 → 옮기기 → 내보내기 → 시작 | 약 30초 |
 | `offline.js` | 오프라인 진행: 교사가 O/X·걸기 입력으로 한 판 | 약 1분 |
-| `rules_and_test_window.js` | 설명 슬라이드 11장 + 테스트 창 | 약 1분 |
+| `rules_and_test_window.js` | 설명 슬라이드 14장 + 테스트 창 | 약 1분 |
 | `firebase.js` | Firebase 에뮬레이터: 익명 로그인 · 실시간 DB · 보안 규칙(7가지 차단 확인) · 한 판 | 약 2분 |
 
 ## Firebase 에뮬레이터 시험
