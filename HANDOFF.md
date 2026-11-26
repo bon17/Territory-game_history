@@ -39,8 +39,10 @@
 - 단답 채점: 띄어쓰기·대소문자 무시, 자모 끊김(`대류ㄱ봉소ㅐ령`) 허용, 오타 허용 안 함. 교사가 오답을 정답으로 인정 가능
 
 ## 남은 일
-1. **사용자 기다리는 중**: `Firebase_설정_안내.md`대로 설정 후 firebaseConfig 전달 → `firebase-config.js`에 넣기(`databaseURL` 꼭 포함) → Netlify Drop 배포 → 실제 탭 리허설
-   - Firebase 모드는 **에뮬레이터에서 검증 완료**(익명 로그인·실시간 DB·보안 규칙 7가지 차단·한 판 끝까지·방 삭제). 실제 Firebase 서버와 학교 와이파이, 갤럭시탭 브라우저는 아직 미확인
+1. **배포·리허설 (사용자 차례)**: 배포용 zip(사용자에게 보냄) 압축 풀기 → Netlify Drop에 폴더 끌어다 놓기 → 학교 와이파이 + 갤럭시탭으로 리허설
+   - Firebase 프로젝트 `history-island-c26b2` 설정 완료, `firebase-config.js`에 넣음
+   - **실제 Firebase에서 검증 완료**: 방 만들기·학생 2명·한 판·보안 규칙 7가지 차단·방 삭제 (`test/e2e/real_firebase.js`). 학교 와이파이, 갤럭시탭 브라우저는 아직 미확인
+   - 이 저장소 전용 클라우드 환경 `Territory-game_history`를 만듦(Firebase DB·로그인 서버 접속 허용)
 2. Netlify 배포 안내 (`README.md`, 안내서 끝에 간단히 있음)
 3. 선택: 캐릭터 6마리 단체 그림(메인·설명 첫 장용), 사용자가 그리면 넣기
 4. 게임 1(점수판 퀴즈), 게임 3(부루마블)은 아직 시작 안 함
@@ -54,6 +56,7 @@
 - **이 클라우드 환경**: OpenAI·Firebase 서버 접속 차단, 백그라운드 서버 실행 거부됨, 내장 브라우저 도구 없음
 - **시험 방법**: 브라우저 시험 스크립트는 `test/e2e/` (사용법은 `test/e2e/README.md`). Firebase 에뮬레이터 시험은 프록시 변수를 빼고 실행하고, DB 이름은 `demo-history-default-rtdb`. 단위 테스트는 `node test/rules.test.js` (11개)
 - Firebase SDK 주소는 `cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js` 형식(중간에 `/compat/` 없음). 예전에 틀려 있던 것을 고침
+- Artifact 미리보기에는 **빈 `firebase-config.js`를 그대로 둠**(미리보기 안에서는 외부 접속이 막혀 데모로만 돌아감). 미리보기를 다시 올릴 때 `firebase-config.js`를 `files`에 넣지 말 것
 - **Artifact 미리보기 갱신**: 첫 화면은 `index.html`을 변환한 scratchpad의 `game-preview.html`(doctype·html·head·body 제거, 링크에 `target="_blank"`). 다른 파일은 publish의 `files`로 함께 올림. 문제은행은 `questions/bank.tsv` 이름으로 올림(contentType `text/plain`)
 - Artifact 안에서는 `alert/confirm/prompt`가 막혀서 교사 화면은 화면 안 창(`choose`/`ask`)만 씀. 새 확인 창도 이것으로
 - 사용자가 **작업 도중에 보낸 그림은 파일로 저장되지 않을 수 있음**. 없으면 다시 보내 달라고 요청
