@@ -396,18 +396,21 @@
     dots.forEach((d, k) => d.setAttribute('aria-current', k === i));
     $('#prev').disabled = i === 0;
     const last = i === slides.length - 1;
-    $('#next').textContent = last ? (embed ? '설명 끝 ✓' : '처음으로') : '다음 ▶';
+    $('#next').textContent = last ? (embed ? '설명 끝 ✓' : '메인 화면으로') : '다음 ▶';
     slides[i].querySelectorAll('.big-card, .p, .chars .c').forEach((e, k) => { e.classList.remove('pop'); void e.offsetWidth; e.style.animationDelay = (k * .08) + 's'; e.classList.add('pop'); });
   }
   function next() {
-    if (i === slides.length - 1) { if (embed) return close(); return go(0); }
+    if (i === slides.length - 1) { if (embed) return close(); location.href = 'index.html'; return; }
     go(i + 1);
   }
   function close() { if (embed) parent.postMessage({ tg: 'closeRules' }, '*'); }
   $('#prev').onclick = () => go(i - 1);
   $('#next').onclick = next;
   dots.forEach((d, k) => d.onclick = () => go(k));
-  if (embed) { $('#close').classList.remove('hidden'); $('#close').onclick = close; }
+  // 오른쪽 위 버튼: 대기 화면에서 띄웠으면 '설명 닫기', 따로 열었으면 '메인 화면'
+  $('#close').classList.remove('hidden');
+  if (embed) $('#close').onclick = close;
+  else { $('#close').textContent = '메인 화면'; $('#close').onclick = () => { location.href = 'index.html'; }; }
   addEventListener('keydown', e => {
     if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
     else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); go(i - 1); }
