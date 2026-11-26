@@ -9,6 +9,8 @@
   const SAVE_KEY = TEST ? 'tg-host-test' : 'tg-host';
   const SPEED = FAST ? 0.2 : 1;
   const BID_SECONDS = 30;
+  const OPEN_AFTER = 15;      // 걸기 시작 후 이 시간(초)이 지나면 대표가 아니어도 모둠 누구나 확정 가능
+  const ONLINE_MS = 25000;    // 학생 탭이 이 시간 넘게 신호가 없으면 접속이 끊긴 것으로 봄
   const STEP_MS = 3400 * (FAST ? 0.4 : 1);
   const now = () => db.now(); // Firebase 모드에서는 서버 시간 기준
   const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -167,6 +169,7 @@
   function membersOf(t) {
     return Object.entries(G.players).filter(([, p]) => p && p.team === t).sort((a, b) => a[1].no - b[1].no);
   }
+  const isOnline = p => !!p && (p.bot || (p.seen && now() - p.seen < ONLINE_MS));
   const unassigned = () => Object.entries(G.players).filter(([, p]) => p && (p.team === null || p.team === undefined)).sort((a, b) => a[1].no - b[1].no);
   const teamSizes = () => Array.from({ length: G.teamCount }, (_, t) => membersOf(t).length);
   function setTeam(key, team) {
@@ -223,7 +226,8 @@
   }
   function chip(key, p) {
     const color = p.team === null || p.team === undefined ? '#fff' : TEAMS[p.team].color;
-    return `<button class="pchip ${p.bot ? 'bot' : ''}" data-key="${esc(key)}" style="--c:${color}" aria-label="${p.bot ? '가상 학생' : p.no + '번 학생'} 옮기기">${p.bot ? '가상' : p.no + '번'}</button>`;
+    const off = !isOnline(p);
+    return `<button class="pchip ${p.bot ? 'bot' : ''} ${off ? 'off' : ''}" data-key="${esc(key)}" style="--c:${color}" aria-label="${p.bot ? '가상 학생' : p.no + '번 학생'}${off ? ' (접속 끊김)' : ''} 옮기기" title="${off ? '접속이 끊겼어요' : ''}">${p.bot ? '가상' : p.no + '번'}</button>`;
   }
   function renderLobby() {
     const box = $('#lobbyTeams');
@@ -350,13 +354,17 @@
     const cells = cellsNow();
     G.reps = {}; G.legal = {};
     for (let t = 0; t < G.teamCount; t++) {
-      const m = membersOf(t).map(([k]) => k);
+      // 접속이 끊긴 학생은 대표 순서에서 뺀다 (모두 끊겼으면 전체에서 고름)
+      const all = membersOf(t).map(([k]) => k);
+      const on = all.filter(k => isOnline(G.players[k]));
+      const m = on.length ? on : all;
       G.reps[t] = m.length ? m[G.round % m.length] : null;
       G.legal[t] = Rules.legalTargets(cells, t);
     }
     G.bids = {}; G.votes = {};
     if (G.offline) { setOfflineReps(); G.offSel = Array.from({ length: G.teamCount }, (_, k) => k).find(k => G.coins[k] >= 1); G.offCell = null; G.offBet = 1; }
     G.phase = 'bid'; G.deadline = now() + BID_SECONDS * 1000 * SPEED;
+    G.openAt = now() + OPEN_AFTER * 1000 * SPEED; // 이때부터 모둠 누구나 확정 가능
     listen('bids', R(`bids/${G.round}`), b => { G.bids = b || {}; if (G.phase === 'bid') renderBoard(); });
     listen('votes', R(`votes/${G.round}`), v => { G.votes = v || {}; });
     publish(); render(); SFX.coin();
@@ -466,6 +474,7 @@
     if (G.phase === 'resolve') stepResolve(t);
   }
   setInterval(tick, 200);
+  setInterval(() => { if (G && G.phase === 'lobby') renderLobby(); }, 5000);
 
   /* ---------------- 저장·공유 ---------------- */
   function publicState() {
@@ -479,7 +488,7 @@
       teamResults: showAnswer && G.reveal ? G.reveal.perTeam : null,
       coop: showAnswer && G.reveal ? G.reveal.coop : false,
       coins: G.coins, owners: G.displayOwners || G.owners,
-      reps: G.phase === 'bid' ? G.reps : null, legal: G.phase === 'bid' ? G.legal : null,
+      reps: G.phase === 'bid' ? G.reps : null, legal: G.phase === 'bid' ? G.legal : null, openAt: G.phase === 'bid' ? (G.openAt || 0) : 0,
       reveal: G.phase === 'resolve' && G.revealList ? { item: G.revealList[G.revealIdx] || null, stage: G.revealStage, idx: G.revealIdx, n: G.revealList.length } : null,
       final: G.phase === 'final' ? G.final : null
     };

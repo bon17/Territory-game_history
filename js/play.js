@@ -47,7 +47,7 @@
     if (subs.players) subs.players();
     await db.ready;
     me = { room: code, no: data.no, key };
-    await db.set(`rooms/${code}/players/${key}`, Object.assign({ ts: db.now(), uid: db.uid }, data));
+    await db.set(`rooms/${code}/players/${key}`, Object.assign({ ts: db.now(), seen: db.now(), uid: db.uid }, data));
     try { store.setItem(ME_KEY, JSON.stringify(me)); } catch (e) { /* 저장 불가 */ }
     SFX.ok();
     startPlaying();
@@ -298,6 +298,8 @@
     return cells;
   }
   const isRep = () => S.reps && S.reps[myTeam] === me.key;
+  const openForAll = () => S.openAt && db.now() >= S.openAt; // 대표가 늦으면 누구나
+  const canConfirm = () => isRep() || openForAll();
 
   function bid() {
     const coins = S.coins[myTeam];
@@ -312,8 +314,8 @@
       side.innerHTML = `<div class="big">확정 완료!</div><div class="mid">${esc(nameOf(myBid.cell))}에 <span class="coin"></span> ${myBid.coins}개를 걸었어요<br>TV를 봐요</div>`;
     } else if (coins < 1) {
       side.innerHTML = `<div class="big">코인이 없어요</div><div class="mid">이번 라운드는 쉬어요. 다음 문제를 맞혀서 코인을 모아요!</div>`;
-    } else if (isRep()) {
-      side.innerHTML = `<div class="big" style="font-size:28px">내가 이번 대표!</div>
+    } else if (canConfirm()) {
+      side.innerHTML = `<div class="big" style="font-size:28px">${isRep() ? '내가 이번 대표!' : '누구든 확정 가능!'}</div>${isRep() ? '' : '<div class="mid" style="font-size:17px;color:var(--no)">대표가 15초 안에 못 정했어요. 먼저 누른 사람 것이 들어가요</div>'}
         <div class="mid">반짝이는 칸을 눌러 고르고,<br>몇 개 걸지 정해서 확정해요<br><small>숫자는 친구들이 투표한 수예요</small></div>
         <div class="selname" id="selname">칸을 골라요</div>
         <div class="stepper"><button id="minus" aria-label="코인 빼기">−</button><div class="val num" id="betv">${bet}</div><button id="plus" aria-label="코인 더하기">+</button></div>
@@ -328,7 +330,7 @@
       };
     } else {
       side.innerHTML = `<div class="big" style="font-size:28px">대표는 ${esc(repNo)}번 친구</div>
-        <div class="mid">가고 싶은 칸을 눌러서 투표해요!<br>대표가 보고 최종으로 정해요</div><div class="selname" id="selname"></div>`;
+        <div class="mid">가고 싶은 칸을 눌러서 투표해요!<br>대표가 보고 최종으로 정해요<br><small>대표가 15초 안에 못 정하면 누구나 확정할 수 있어요</small></div><div class="selname" id="selname"></div>`;
     }
     updateBid();
   }
@@ -347,7 +349,7 @@
       }) : null
     });
     const sn = $('#selname');
-    if (sn) sn.textContent = sel ? `${nameOf(sel)}${cellsFromState()[sel].owner === myTeam ? ' (우리 땅 지키기)' : ''}` : (isRep() ? '칸을 골라요' : '');
+    if (sn) sn.textContent = sel ? `${nameOf(sel)}${cellsFromState()[sel].owner === myTeam ? ' (우리 땅 지키기)' : ''}` : (canConfirm() ? '칸을 골라요' : '');
     const bv = $('#betv'); if (bv) bv.textContent = bet;
     const cf = $('#confirm'); if (cf) cf.disabled = !sel;
   }
@@ -378,12 +380,18 @@
     if (mine.place === 1) SFX.win();
   }
 
+  /* ---------------- 접속 신호 (10초마다, 탭이 다시 보일 때도) ---------------- */
+  function heartbeat() { if (me && db) db.set(R(`players/${me.key}/seen`), db.now()).catch(() => {}); }
+  setInterval(heartbeat, 10000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') heartbeat(); });
+
   /* ---------------- 타이머 ---------------- */
   setInterval(() => {
     const el = $('#ptimer');
     if (!S || !(S.phase === 'question' || S.phase === 'bid') || S.paused) { el.classList.add('hidden'); return; }
     const left = Math.max(0, Math.ceil((S.deadline - db.now()) / 1000));
     el.innerHTML = `<img class="ico" src="images/hourglass.png" alt="" style="width:24px;height:24px"> ${left}`; el.classList.remove('hidden'); el.classList.toggle('hurry', left <= 5);
+    if (S.phase === 'bid' && !myBid && myTeam !== null && S.coins && S.coins[myTeam] >= 1 && openForAll() && !isRep() && !$('#confirm') && $('#side')) { SFX.pop(); render(true); }
   }, 250);
 
   /* ---------------- 시작 ---------------- */
